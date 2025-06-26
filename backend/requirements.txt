@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+aiosqlite
+pydantic
+xmltodict
+httpx
+apscheduler
+pytest
+pytest-asyncio
+respx
+python-jose
+passlib[bcrypt]
+python-multipart
+bcrypt<4.1
