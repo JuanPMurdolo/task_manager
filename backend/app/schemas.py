@@ -45,6 +45,9 @@ class TaskBulkUpdate(BaseModel):
     priority: Optional[str] = None
     due_date: Optional[datetime] = None
     updated_by: Optional[int] = None
+    
+class TaskStatus(str):
+    status: Optional[str] = "Pending"
 
 class PaginationParams(BaseModel):
     page: int = 1
@@ -57,6 +60,7 @@ class UserCreate(BaseModel):
     email: str
     full_name: Optional[str] = None
     password: str
+    type: Optional[str] = None  # e.g., "admin", "user"
 
 class UserResponse(BaseModel):
     id: int
@@ -64,9 +68,11 @@ class UserResponse(BaseModel):
     email: str
     full_name: Optional[str] = None
     is_active: bool
+    type: Optional[str] = None  # e.g., "admin", "user"
 
     class Config:
         from_attributes = True
+
 
 class Token(BaseModel):
     access_token: str

@@ -6,17 +6,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TaskList } from "@/components/task-list"
 import { TaskFilters } from "@/components/task-filters"
 import { TaskForm } from "@/components/task-form"
-import { LogOut, Plus, CheckSquare, Clock, AlertCircle } from "lucide-react"
+import { LogOut, Plus, CheckSquare, Clock, AlertCircle, Users } from "lucide-react"
+
+interface User {
+  id: number
+  username: string
+  email: string
+  full_name: string
+}
 
 interface Task {
   id: number
   title: string
   description: string
   status: "pending" | "in_progress" | "completed"
-  priority: 1 | 2 | 3 | 4 | 5 
+  priority: "low" | "medium" | "high"
   due_date: string | null
   created_at: string
   updated_at: string
+  created_by: string
+  updated_by: string
+  assigned_to: string | null
 }
 
 interface TaskDashboardProps {
@@ -26,12 +36,27 @@ interface TaskDashboardProps {
 export function TaskDashboard({ onLogout }: TaskDashboardProps) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
 
   useEffect(() => {
+    const userData = localStorage.getItem("user")
+    if (userData) {
+      try {
+        const userData = localStorage.getItem("user")
+        if (userData) {
+          setCurrentUser(JSON.parse(userData))
+        }
+      } catch (error) {
+        console.error("Failed to parse user from localStorage", error)
+        localStorage.removeItem("user") // opcional, limpia si está corrupto
+      }
+    }
     fetchTasks()
+    fetchUsers()
   }, [])
 
   const fetchTasks = async () => {
@@ -47,11 +72,33 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
         const data = await response.json()
         setTasks(data)
         setFilteredTasks(data)
+      } else if (response.status === 404) {
+        // No tasks found
+        setTasks([])
+        setFilteredTasks([])
       }
     } catch (error) {
       console.error("Failed to fetch tasks:", error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch("http://localhost:8000/users/getall", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error)
     }
   }
 
@@ -89,6 +136,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
     completed: tasks.filter((task) => task.status === "completed").length,
     pending: tasks.filter((task) => task.status === "pending").length,
     inProgress: tasks.filter((task) => task.status === "in_progress").length,
+    assignedToMe: tasks.filter((task) => task.assigned_to === currentUser?.username).length,
   }
 
   if (isLoading) {
@@ -106,9 +154,16 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <CheckSquare className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold">
-              <span className="neon-green">TASK</span> MANAGER
-            </h1>
+            <div>
+              <h1 className="text-2xl font-bold">
+                <span className="neon-green">TASK</span> MANAGER
+              </h1>
+              {currentUser && (
+                <p className="text-sm text-gray-400">
+                  Welcome back, <span className="text-primary">{currentUser.full_name || currentUser.username}</span>
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex items-center space-x-4">
             <Button
@@ -128,7 +183,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
 
       {/* Stats Cards */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <Card className="card-gradient border-white/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-300">Total Tasks</CardTitle>
@@ -168,19 +223,30 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
               <div className="text-2xl font-bold text-yellow-400">{stats.pending}</div>
             </CardContent>
           </Card>
+
+          <Card className="card-gradient border-white/10">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-300">Assigned to Me</CardTitle>
+              <Users className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{stats.assignedToMe}</div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filters Sidebar */}
           <div className="lg:col-span-1">
-            <TaskFilters tasks={tasks} onFiltersChange={handleFiltersChange} />
+            <TaskFilters tasks={tasks} onFiltersChange={handleFiltersChange} users={users} />
           </div>
 
           {/* Task List */}
           <div className="lg:col-span-3">
             <TaskList
               tasks={filteredTasks}
+              users={users}
               onTaskUpdated={handleTaskUpdated}
               onTaskDeleted={handleTaskDeleted}
               onEditTask={handleEditTask}
@@ -193,6 +259,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
       {showTaskForm && (
         <TaskForm
           task={editingTask}
+          users={users}
           onTaskCreated={handleTaskCreated}
           onTaskUpdated={handleTaskUpdated}
           onClose={() => {

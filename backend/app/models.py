@@ -35,6 +35,7 @@ class User(Base):
     full_name = Column(String, nullable=True)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+    type = Column(String, default="user")  # e.g., "admin", "user"
 
     # Relaciones bidireccionales
     tasks_created = relationship('Task', foreign_keys=[Task.created_by], back_populates='creator')

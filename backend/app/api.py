@@ -5,7 +5,7 @@ from typing import List
 from datetime import datetime
 
 from app.models import Task, User
-from app.schemas import TaskCommentResponse, TaskUpdate
+from app.schemas import TaskCommentResponse, TaskUpdate, UserCreate, UserResponse
 from app.database import get_db
 from app.schemas import (
     TaskBulkUpdate, TaskResponse, TaskComment, TaskCommentResponse,
@@ -51,6 +51,7 @@ async def create_task(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
     now = datetime.utcnow()
     new_task = Task(
         title=task_data.title,
@@ -222,3 +223,61 @@ async def get_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     return (await enrich_tasks_with_usernames([task], db))[0]
+
+@router.get("/users/getall", response_model=List[UserResponse])
+async def get_all_users(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User))
+    users = result.scalars().all()
+    return users
+
+@router.put("/tasks/{task_id}/status", response_model=TaskResponse)
+async def update_task_status(
+    task_id: int,
+    status: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    task = await db.get(Task, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if status not in ["pending", "in_progress", "completed"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    task.status = status
+    task.updated_by = current_user.id
+    task.updated_at = datetime.utcnow()
+
+    await db.commit()
+    await db.refresh(task)
+
+    return (await enrich_tasks_with_usernames([task], db))[0]
+
+@router.post("/users", response_model=UserResponse)
+async def create_user(
+    user_data: UserCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.type != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can create users")
+
+    existing_user = await db.execute(select(User).where(User.username == user_data.username))
+    if existing_user.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Username already registered")
+
+    new_user = User(
+        username=user_data.username,
+        email=user_data.email,
+        full_name=user_data.full_name,
+        hashed_password=user_data.password,  # Assuming password is hashed before this step
+        is_active=True,
+        type=user_data.type or "user"
+    )
+
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+
+    return UserResponse.from_orm(new_user)
+
