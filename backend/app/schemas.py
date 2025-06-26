@@ -5,32 +5,44 @@ from datetime import datetime
 class TaskCreate(BaseModel):
     title: str
     description: Optional[str] = None
+    status: Optional[str] = "pending"
+    priority: Optional[str] = "low"
     due_date: Optional[datetime] = None
-    priority: int = 1
     assigned_to: Optional[int] = None
+
 
 class TaskResponse(BaseModel):
     id: int
     title: str
     description: Optional[str]
     status: str
-    priority: int
+    priority: str  # e.g., low, medium, high, urgent
     due_date: Optional[datetime]
     created_at: datetime
     updated_at: datetime
     created_by: str  # nombre de usuario
-    updated_by: str  # nombre de usuario
+    updated_by: Optional[str]  # nombre de usuario
     assigned_to: Optional[str]  # nombre de usuario o None
 
 
     class Config:
         from_attributes = True
+        
+class TaskUpdate(BaseModel):
+    title: Optional[str]
+    description: Optional[str]
+    status: Optional[str]
+    priority: Optional[str]
+    due_date: Optional[datetime]
+    assigned_to: Optional[int] = None
+    updated_by: Optional[int] = None
+    
 
 class TaskBulkUpdate(BaseModel):
     task_ids: List[int]
     status: Optional[str] = None
     assigned_to: Optional[int] = None
-    priority: Optional[int] = None
+    priority: Optional[str] = None
     due_date: Optional[datetime] = None
     updated_by: Optional[int] = None
 

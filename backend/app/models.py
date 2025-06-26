@@ -10,7 +10,7 @@ class Task(Base):
     title = Column(String, index=True)
     description = Column(String, nullable=True)
     status = Column(String, default='pending')  # e.g., pending, in_progress, completed
-    priority = Column(Integer, default=1)  # 1 is low priority, 5 is high priority
+    priority = Column(String, default="low")  # e.g., low, medium, high, urgent
     created_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, nullable=True)
     created_by = Column(Integer, ForeignKey('users.id'), nullable=False)

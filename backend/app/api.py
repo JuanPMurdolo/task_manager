@@ -5,7 +5,7 @@ from typing import List
 from datetime import datetime
 
 from app.models import Task, User
-from app.schemas import TaskCommentResponse
+from app.schemas import TaskCommentResponse, TaskUpdate
 from app.database import get_db
 from app.schemas import (
     TaskBulkUpdate, TaskResponse, TaskComment, TaskCommentResponse,
@@ -51,27 +51,30 @@ async def create_task(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    now = datetime.utcnow()
     new_task = Task(
         title=task_data.title,
         description=task_data.description,
-        status="pending",
+        status=task_data.status,
         priority=task_data.priority,
         due_date=task_data.due_date,
-        created_by=current_user.id,
         assigned_to=task_data.assigned_to,
-        created_at=datetime.utcnow(),
+        created_by=current_user.id,
         updated_by=current_user.id,
-        updated_at=datetime.utcnow()
+        created_at=now,
+        updated_at=now,
     )
+
     db.add(new_task)
     await db.commit()
     await db.refresh(new_task)
+
     return (await enrich_tasks_with_usernames([new_task], db))[0]
 
 @router.put("/tasks/{task_id}", response_model=TaskResponse)
 async def update_task(
     task_id: int,
-    task_update: TaskBulkUpdate,
+    task_update: TaskUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

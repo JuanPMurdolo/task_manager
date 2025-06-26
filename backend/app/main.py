@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.middleware.cors import CORSMiddleware
 
 
 from app.api import router as api_router
@@ -15,6 +16,14 @@ app = FastAPI(
 @app.on_event("startup")
 async def startup_event():
     await init_db()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # <-- Frontend dev en React
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
     
 app.include_router(api_router)
 app.include_router(auth_router, tags=["auth"])
