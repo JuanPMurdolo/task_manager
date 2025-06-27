@@ -1,6 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from app.models.base import Base
+from app.models.user import User
+from app.models.task import Task
 
 DATABASE_URL = "sqlite+aiosqlite:///./tasks.db" # Use your actual database URL here
 # For PostgreSQL, it would look like:

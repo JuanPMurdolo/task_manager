@@ -52,22 +52,29 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onError, onClose 
     }
   }, [user])
 
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
+
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    // Validation
-    if (!user && formData.password !== formData.confirmPassword) {
-      onError("Passwords do not match")
-      setIsLoading(false)
-      return
-    }
-
-    if (!user && formData.password.length < 6) {
-      onError("Password must be at least 6 characters long")
-      setIsLoading(false)
-      return
-    }
+      e.preventDefault()
+      setIsLoading(true)
+      const newErrors: { [key: string]: string } = {}
+      
+      // Validaciones
+      if (!user && formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = "Passwords do not match"
+      }
+    
+      if (!user && formData.password.length < 6) {
+        newErrors.password = "Password must be at least 6 characters long"
+      }
+    
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors)
+        setIsLoading(false)
+        return
+      }
+    
+      setErrors({}) // limpiar errores si pasa la validación
 
     try {
       const token = localStorage.getItem("token")
@@ -104,9 +111,16 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onError, onClose 
         }
         onClose()
       } else {
-        const errorData = await response.json()
-        onError(errorData.detail || `Failed to ${user ? "update" : "create"} user`)
-      }
+          const errorData = await response.json()
+          const message = errorData.detail || `Failed to ${user ? "update" : "create"} user`
+          if (message.includes("Email already registered")) {
+            setErrors({ email: "This email is already in use" })
+          } else if (message.includes("Username already registered")) {
+            setErrors({ username: "This username is already in use" })
+          } else {
+            onError(message)
+          }
+        }
     } catch (error) {
       onError("Network error. Please try again.")
     } finally {
@@ -134,23 +148,24 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onError, onClose 
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username" className="text-white">
-                Username
-              </Label>
-              <div className="relative">
-                <X className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="username"
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => handleInputChange("username", e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 pl-10"
-                  placeholder="Enter username"
-                  required
-                />
+           <div className="space-y-2">
+                <Label htmlFor="username" className="text-white">
+                  Username
+                </Label>
+                {errors.username && <p className="text-red-500 text-sm -mt-1">{errors.username}</p>}
+                <div className="relative">
+                  <X className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="username"
+                    type="text"
+                    value={formData.username}
+                    onChange={(e) => handleInputChange("username", e.target.value)}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 pl-10"
+                    placeholder="Enter username"
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="email" className="text-white">
@@ -162,12 +177,20 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onError, onClose 
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 pl-10"
+                  onChange={(e) => {
+                    handleInputChange("email", e.target.value)
+                    setErrors(prev => ({ ...prev, email: "" })) // Limpia error al escribir
+                  }}
+                  className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pl-10 ${
+                    errors.email ? "border-red-500" : ""
+                  }`}
                   placeholder="Enter email address"
                   required
                 />
               </div>
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -218,6 +241,7 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onError, onClose 
                   <Label htmlFor="password" className="text-white">
                     Password
                   </Label>
+                  {errors.password && <p className="text-red-500 text-sm -mt-1">{errors.password}</p>}
                   <div className="relative">
                     <Input
                       id="password"
@@ -240,10 +264,12 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onError, onClose 
                   </div>
                 </div>
 
+
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword" className="text-white">
                     Confirm Password
                   </Label>
+                  {errors.confirmPassword && <p className="text-red-500 text-sm -mt-1">{errors.confirmPassword}</p>}
                   <div className="relative">
                     <Input
                       id="confirmPassword"

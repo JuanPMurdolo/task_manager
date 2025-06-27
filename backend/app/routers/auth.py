@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta, datetime
-from typing import Optional
+from typing import List, Optional
 from passlib.context import CryptContext
 
 from app.models.user import User
@@ -49,6 +49,10 @@ async def register(
     result = await db.execute(select(User).where(User.username == user_data.username))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Username already registered")
+    
+    existing_user = await db.execute(select(User).where(User.email == user_data.email))
+    if existing_user.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_password = pwd_context.hash(user_data.password)
     new_user = User(
@@ -72,3 +76,41 @@ async def logout():
 @router.get("/auth/check", response_model=UserResponse)
 async def check_permissions(current_user: User = Depends(get_current_user)):
     return UserResponse.from_orm(current_user)
+
+@router.get("/users/getall", response_model=List[UserResponse])
+async def get_all_users(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User))
+    users = result.scalars().all()
+    return users
+
+@router.post("/users", response_model=UserResponse)
+async def create_user(
+    user_data: UserCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.type != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can create users")
+
+    existing_user = await db.execute(select(User).where(User.username == user_data.username))
+    if existing_user.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    existing_user = await db.execute(select(User).where(User.email == user_data.email))
+    if existing_user.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    new_user = User(
+        username=user_data.username,
+        email=user_data.email,
+        full_name=user_data.full_name,
+        hashed_password=user_data.password,  # Assuming password is hashed before this step
+        is_active=True,
+        type=user_data.type or "user"
+    )
+
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+
+    return UserResponse.from_orm(new_user)

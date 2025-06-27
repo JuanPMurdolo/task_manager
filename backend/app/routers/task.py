@@ -10,38 +10,12 @@ from app.schemas.task import TaskCommentResponse, TaskUpdate, TaskBulkUpdate, Ta
 from app.schemas.user import UserResponse, UserCreate
 from app.database import get_db
 from app.auth import get_current_user
+from app.repositories.task import enrich_tasks_with_usernames, create_task_in_db, update_task_in_db, bulk_update_tasks_in_db, get_all_tasks_in_db, \
+    get_tasks_created_by_user_in_db, get_tasks_updated_by_user_in_db, get_tasks_assigned_to_user_in_db, get_overdue_tasks_in_db, \
+    get_tasks_by_priority_in_db, search_tasks_by_title_in_db, update_task_status_in_db, get_task_by_id_in_db
 
 router = APIRouter()
 
-async def enrich_tasks_with_usernames(tasks: list[Task], db: AsyncSession) -> list[TaskResponse]:
-    user_ids = set()
-    for task in tasks:
-        if task.created_by:
-            user_ids.add(task.created_by)
-        if task.updated_by:
-            user_ids.add(task.updated_by)
-        if task.assigned_to:
-            user_ids.add(task.assigned_to)
-
-    result = await db.execute(select(User).where(User.id.in_(user_ids)))
-    user_map = {user.id: user.username for user in result.scalars().all()}
-
-    return [
-        TaskResponse(
-            id=t.id,
-            title=t.title,
-            description=t.description,
-            status=t.status,
-            priority=t.priority,
-            due_date=t.due_date,
-            created_at=t.created_at,
-            updated_at=t.updated_at,
-            created_by=user_map.get(t.created_by, "Desconocido"),
-            updated_by=user_map.get(t.updated_by, "Desconocido"),
-            assigned_to=user_map.get(t.assigned_to, "Desconocido") if t.assigned_to else None
-        )
-        for t in tasks
-    ]
 
 @router.post("/tasks", response_model=TaskResponse)
 async def create_task(
@@ -49,25 +23,7 @@ async def create_task(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-
-    now = datetime.utcnow()
-    new_task = Task(
-        title=task_data.title,
-        description=task_data.description,
-        status=task_data.status,
-        priority=task_data.priority,
-        due_date=task_data.due_date,
-        assigned_to=task_data.assigned_to,
-        created_by=current_user.id,
-        updated_by=current_user.id,
-        created_at=now,
-        updated_at=now,
-    )
-
-    db.add(new_task)
-    await db.commit()
-    await db.refresh(new_task)
-
+    new_task = await create_task_in_db(db, task_data, current_user.id)
     return (await enrich_tasks_with_usernames([new_task], db))[0]
 
 @router.put("/tasks/{task_id}", response_model=TaskResponse)
@@ -77,24 +33,11 @@ async def update_task(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    task = await db.get(Task, task_id)
+    task = await update_task_in_db(db, task_id, task_update, current_user.id)
+    
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-
-    if task_update.status is not None:
-        task.status = task_update.status
-    if task_update.assigned_to is not None:
-        task.assigned_to = task_update.assigned_to
-    if task_update.priority is not None:
-        task.priority = task_update.priority
-    if task_update.due_date is not None:
-        task.due_date = task_update.due_date
-
-    task.updated_by = current_user.id
-    task.updated_at = datetime.utcnow()
-
-    await db.commit()
-    await db.refresh(task)
+    
     return (await enrich_tasks_with_usernames([task], db))[0]
 
 @router.post("/tasks/bulk_update", response_model=List[TaskResponse])
@@ -106,26 +49,11 @@ async def bulk_update_tasks(
     if not task_update.task_ids:
         raise HTTPException(status_code=400, detail="No task IDs provided")
 
-    result = await db.execute(select(Task).where(Task.id.in_(task_update.task_ids)))
-    tasks = result.scalars().all()
+    tasks = await bulk_update_tasks_in_db(db, task_update.task_ids, task_update, current_user.id)
 
     if not tasks:
         raise HTTPException(status_code=404, detail="No tasks found")
 
-    for task in tasks:
-        if task_update.status is not None:
-            task.status = task_update.status
-        if task_update.assigned_to is not None:
-            task.assigned_to = task_update.assigned_to
-        if task_update.priority is not None:
-            task.priority = task_update.priority
-        if task_update.due_date is not None:
-            task.due_date = task_update.due_date
-
-        task.updated_by = current_user.id
-        task.updated_at = datetime.utcnow()
-
-    await db.commit()
     return await enrich_tasks_with_usernames(tasks, db)
 
 @router.get("/tasks", response_model=List[TaskResponse])
@@ -133,9 +61,7 @@ async def list_tasks(
     pagination: PaginationParams = Depends(),
     db: AsyncSession = Depends(get_db)
 ):
-    query = select(Task).offset(pagination.skip).limit(pagination.limit)
-    result = await db.execute(query)
-    tasks = result.scalars().all()
+    tasks = await get_all_tasks_in_db(db, skip=pagination.skip, limit=pagination.limit)
     if not tasks:
         raise HTTPException(status_code=404, detail="No tasks found")
     return await enrich_tasks_with_usernames(tasks, db)
@@ -145,8 +71,7 @@ async def get_created_tasks(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Task).where(Task.created_by == current_user.id))
-    tasks = result.scalars().all()
+    tasks = await get_tasks_created_by_user_in_db(db, current_user.id)
     return await enrich_tasks_with_usernames(tasks, db)
 
 @router.get("/tasks/updated", response_model=List[TaskResponse])
@@ -154,8 +79,7 @@ async def get_updated_tasks(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Task).where(Task.updated_by == current_user.id))
-    tasks = result.scalars().all()
+    tasks = await get_tasks_updated_by_user_in_db(db, current_user.id)
     return await enrich_tasks_with_usernames(tasks, db)
 
 @router.get("/tasks/assigned", response_model=List[TaskResponse])
@@ -163,29 +87,25 @@ async def get_assigned_tasks(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Task).where(Task.assigned_to == current_user.id))
-    tasks = result.scalars().all()
+    tasks = await get_tasks_assigned_to_user_in_db(db, current_user.id)
     return await enrich_tasks_with_usernames(tasks, db)
 
 @router.get("/tasks/overdue", response_model=List[TaskResponse])
-async def get_overdue_tasks(
+async def get_overdue_tasks_endpoint(
     db: AsyncSession = Depends(get_db)
 ):
-    now = datetime.utcnow()
-    result = await db.execute(select(Task).where(Task.due_date < now, Task.status != 'completed'))
-    tasks = result.scalars().all()
+    tasks = await get_overdue_tasks_in_db(db)
     return await enrich_tasks_with_usernames(tasks, db)
 
 @router.get("/tasks/priority/{priority}", response_model=List[TaskResponse])
-async def get_tasks_by_priority(
+async def get_tasks_by_priority_endpoint(
     priority: int,
     db: AsyncSession = Depends(get_db)
 ):
     if priority < 1 or priority > 5:
         raise HTTPException(status_code=400, detail="Priority must be between 1 and 5")
 
-    result = await db.execute(select(Task).where(Task.priority == priority))
-    tasks = result.scalars().all()
+    tasks = await get_tasks_by_priority_in_db(db, priority)
     return await enrich_tasks_with_usernames(tasks, db)
 
 @router.get("/tasks/search", response_model=List[TaskResponse])
@@ -197,19 +117,15 @@ async def search_tasks(
     if not query:
         raise HTTPException(status_code=400, detail="Search query cannot be empty")
 
-    result = await db.execute(
-        select(Task).where(Task.title.ilike(f"%{query}%")).offset(pagination.skip).limit(pagination.limit)
-    )
-    tasks = result.scalars().all()
+    tasks = await search_tasks_by_title_in_db(db, query, pagination.skip, pagination.limit)
     return await enrich_tasks_with_usernames(tasks, db)
 
 @router.get("/tasks/created_by/{user_id}", response_model=List[TaskResponse])
-async def get_tasks_created_by_user(
+async def get_tasks_created_by_user_route(
     user_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Task).where(Task.created_by == user_id))
-    tasks = result.scalars().all()
+    tasks = await get_tasks_created_by_user_in_db(db, user_id)
     return await enrich_tasks_with_usernames(tasks, db)
 
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
@@ -217,16 +133,10 @@ async def get_task(
     task_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    task = await db.get(Task, task_id)
+    task = await get_task_by_id_in_db(db, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     return (await enrich_tasks_with_usernames([task], db))[0]
-
-@router.get("/users/getall", response_model=List[UserResponse])
-async def get_all_users(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User))
-    users = result.scalars().all()
-    return users
 
 @router.put("/tasks/{task_id}/status", response_model=TaskResponse)
 async def update_task_status(
@@ -235,47 +145,12 @@ async def update_task_status(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    task = await db.get(Task, task_id)
+    try:
+        task = await update_task_status_in_db(db, task_id, status, current_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    if status not in ["pending", "in_progress", "completed", "hold", "cancelled"]:
-        raise HTTPException(status_code=400, detail="Invalid status")
-
-    task.status = status
-    task.updated_by = current_user.id
-    task.updated_at = datetime.utcnow()
-
-    await db.commit()
-    await db.refresh(task)
-
     return (await enrich_tasks_with_usernames([task], db))[0]
-
-@router.post("/users", response_model=UserResponse)
-async def create_user(
-    user_data: UserCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    if current_user.type != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can create users")
-
-    existing_user = await db.execute(select(User).where(User.username == user_data.username))
-    if existing_user.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Username already registered")
-
-    new_user = User(
-        username=user_data.username,
-        email=user_data.email,
-        full_name=user_data.full_name,
-        hashed_password=user_data.password,  # Assuming password is hashed before this step
-        is_active=True,
-        type=user_data.type or "user"
-    )
-
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
-
-    return UserResponse.from_orm(new_user)
-
