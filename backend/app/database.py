@@ -1,39 +1,31 @@
+import os
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from app.models.base import Base
 from app.models.user import User
 from app.models.task import Task
+from dotenv import load_dotenv
 
-DATABASE_URL = "sqlite+aiosqlite:///./tasks.db" # Use your actual database URL here
-# For PostgreSQL, it would look like:
-# DATABASE_URL = "postgresql+asyncpg://user:password@localhost/dbname"
-# For MySQL, it would look like:
-# DATABASE_URL = "mysql+aiomysql://user:password@localhost/dbname"
+load_dotenv()
+
+USE_SQLITE = os.getenv("USE_SQLITE", "false").lower() == "true"
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if USE_SQLITE:
+    DATABASE_URL = "sqlite+aiosqlite:///./tasks.db"
+elif not DATABASE_URL:
+    raise ValueError("DATABASE_URL not set and USE_SQLITE is false")
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 
-# Create a session factory for async sessions
-# This will be used to create new sessions for each request
 AsyncSessionLocal = sessionmaker(
     bind=engine, class_=AsyncSession, expire_on_commit=False
 )
 
-# Base class for all models
 async def init_db():
-    """
-    Initialize the database by creating all tables defined in the models.
-    This function should be called once at the startup of the application.
-    """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-# Dependency to get the database session
-# This will be used in FastAPI routes to get a session for each request
 async def get_db():
-    """
-    Dependency to get a database session.
-    This function yields a session that can be used in FastAPI routes.
-    It ensures that the session is properly closed after use.
-    """
     async with AsyncSessionLocal() as session:
         yield session

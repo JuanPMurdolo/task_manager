@@ -57,17 +57,17 @@ export function TaskFilters({ tasks, users, onFiltersChange }: TaskFiltersProps)
     }
 
     // Status filter
-    if (filters.status) {
+    if (filters.status && filters.status !== "all") {
       filtered = filtered.filter((task) => task.status === filters.status)
     }
 
     // Priority filter
-    if (filters.priority) {
+    if (filters.priority && filters.priority !== "all") {
       filtered = filtered.filter((task) => task.priority === filters.priority)
     }
 
     // Assigned to filter
-    if (filters.assignedTo) {
+    if (filters.assignedTo && filters.assignedTo !== "all") {
       if (filters.assignedTo === "unassigned") {
         filtered = filtered.filter((task) => !task.assigned_to)
       } else {
@@ -76,7 +76,7 @@ export function TaskFilters({ tasks, users, onFiltersChange }: TaskFiltersProps)
     }
 
     // Created by filter
-    if (filters.createdBy) {
+    if (filters.createdBy && filters.createdBy !== "all") {
       filtered = filtered.filter((task) => task.created_by === filters.createdBy)
     }
 
@@ -173,8 +173,10 @@ export function TaskFilters({ tasks, users, onFiltersChange }: TaskFiltersProps)
             <SelectContent className="bg-gray-900 border-white/20">
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="hold">Hold</SelectItem>
               <SelectItem value="in_progress">In Progress</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -191,6 +193,7 @@ export function TaskFilters({ tasks, users, onFiltersChange }: TaskFiltersProps)
               <SelectItem value="low">Low</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
               <SelectItem value="high">High</SelectItem>
+              <SelectItem value="urgent">Urgent</SelectItem>
             </SelectContent>
           </Select>
         </div>

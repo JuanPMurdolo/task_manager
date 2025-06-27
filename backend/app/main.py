@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 
 
 from app.routers.task import router as api_router
@@ -12,6 +13,8 @@ app = FastAPI(
     description="Challenge for Lemon Cash, a task management system",
     version="1.0.0"
 )
+
+load_dotenv()
 
 @app.on_event("startup")
 async def startup_event():

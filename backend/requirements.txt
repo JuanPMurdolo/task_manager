@@ -13,3 +13,4 @@ python-jose
 passlib[bcrypt]
 python-multipart
 bcrypt<4.1
+asyncpg
