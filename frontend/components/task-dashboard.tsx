@@ -6,21 +6,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TaskList } from "@/components/task-list"
 import { TaskFilters } from "@/components/task-filters"
 import { TaskForm } from "@/components/task-form"
-import { LogOut, Plus, CheckSquare, Clock, AlertCircle, Users } from "lucide-react"
+import { UserManagement } from "@/components/user-management"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LogOut, Plus, CheckSquare, Clock, AlertCircle, Users, Shield, UserPlus } from 'lucide-react'
 
 interface User {
   id: number
   username: string
   email: string
   full_name: string
+  type: string
 }
 
 interface Task {
   id: number
   title: string
   description: string
-  status: "pending" | "in_progress" | "completed"
-  priority: "low" | "medium" | "high"
+  status: "pending" | "hold" | "in_progress" | "completed" | "cancelled"
+  priority: "low" | "medium" | "high" | "urgent"
   due_date: string | null
   created_at: string
   updated_at: string
@@ -41,19 +45,13 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [error, setError] = useState("")
+  const [activeTab, setActiveTab] = useState("tasks")
 
   useEffect(() => {
     const userData = localStorage.getItem("user")
     if (userData) {
-      try {
-        const userData = localStorage.getItem("user")
-        if (userData) {
-          setCurrentUser(JSON.parse(userData))
-        }
-      } catch (error) {
-        console.error("Failed to parse user from localStorage", error)
-        localStorage.removeItem("user") // opcional, limpia si está corrupto
-      }
+      setCurrentUser(JSON.parse(userData))
     }
     fetchTasks()
     fetchUsers()
@@ -79,6 +77,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
       }
     } catch (error) {
       console.error("Failed to fetch tasks:", error)
+      setError("Failed to fetch tasks")
     } finally {
       setIsLoading(false)
     }
@@ -106,6 +105,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
     setTasks([...tasks, newTask])
     setFilteredTasks([...filteredTasks, newTask])
     setShowTaskForm(false)
+    setError("")
   }
 
   const handleTaskUpdated = (updatedTask: Task) => {
@@ -114,6 +114,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
     setFilteredTasks(updatedTasks)
     setEditingTask(null)
     setShowTaskForm(false)
+    setError("")
   }
 
   const handleTaskDeleted = (taskId: number) => {
@@ -131,6 +132,24 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
     setFilteredTasks(filtered)
   }
 
+  const handleTaskFormError = (errorMessage: string) => {
+    setError(errorMessage)
+  }
+
+  const handleUserCreated = (newUser: User) => {
+    setUsers([...users, newUser])
+  }
+
+  const handleUserUpdated = (updatedUser: User) => {
+    const updatedUsers = users.map((user) => (user.id === updatedUser.id ? updatedUser : user))
+    setUsers(updatedUsers)
+  }
+
+  const handleUserDeleted = (userId: number) => {
+    const updatedUsers = users.filter((user) => user.id !== userId)
+    setUsers(updatedUsers)
+  }
+
   const stats = {
     total: tasks.length,
     completed: tasks.filter((task) => task.status === "completed").length,
@@ -138,6 +157,8 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
     inProgress: tasks.filter((task) => task.status === "in_progress").length,
     assignedToMe: tasks.filter((task) => task.assigned_to === currentUser?.username).length,
   }
+
+  const isAdmin = currentUser?.type === "admin"
 
   if (isLoading) {
     return (
@@ -159,9 +180,17 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
                 <span className="neon-green">TASK</span> MANAGER
               </h1>
               {currentUser && (
-                <p className="text-sm text-gray-400">
-                  Welcome back, <span className="text-primary">{currentUser.full_name || currentUser.username}</span>
-                </p>
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm text-gray-400">
+                    Welcome back, <span className="text-primary">{currentUser.full_name || currentUser.username}</span>
+                  </p>
+                  {isAdmin && (
+                    <div className="flex items-center space-x-1">
+                      <Shield className="h-3 w-3 text-yellow-400" />
+                      <span className="text-xs text-yellow-400 font-medium">ADMIN</span>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -173,13 +202,27 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
               <Plus className="h-4 w-4 mr-2" />
               New Task
             </Button>
-            <Button variant="outline" onClick={onLogout} className="border-white/20 text-white hover:bg-white/10">
+            <Button
+              variant="outline"
+              onClick={onLogout}
+              className="border-white/20 text-white hover:bg-white/10 bg-transparent"
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
           </div>
         </div>
       </header>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="container mx-auto px-4 pt-4">
+          <Alert className="border-red-500/30 bg-red-500/10">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-red-400">{error}</AlertDescription>
+          </Alert>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="container mx-auto px-4 py-6">
@@ -235,24 +278,50 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
           </Card>
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Filters Sidebar */}
-          <div className="lg:col-span-1">
-            <TaskFilters tasks={tasks} onFiltersChange={handleFiltersChange} users={users} />
-          </div>
+        {/* Main Content with Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-white/5 mb-6">
+            <TabsTrigger value="tasks" className="text-white data-[state=active]:bg-primary">
+              <CheckSquare className="h-4 w-4 mr-2" />
+              Tasks
+            </TabsTrigger>
+            <TabsTrigger value="users" className="text-white data-[state=active]:bg-primary">
+              <UserPlus className="h-4 w-4 mr-2" />
+              User Management
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Task List */}
-          <div className="lg:col-span-3">
-            <TaskList
-              tasks={filteredTasks}
+          <TabsContent value="tasks">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Filters Sidebar */}
+              <div className="lg:col-span-1">
+                <TaskFilters tasks={tasks} onFiltersChange={handleFiltersChange} users={users} />
+              </div>
+
+              {/* Task List */}
+              <div className="lg:col-span-3">
+                <TaskList
+                  tasks={filteredTasks}
+                  users={users}
+                  currentUser={currentUser}
+                  onTaskUpdated={handleTaskUpdated}
+                  onTaskDeleted={handleTaskDeleted}
+                  onEditTask={handleEditTask}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UserManagement
               users={users}
-              onTaskUpdated={handleTaskUpdated}
-              onTaskDeleted={handleTaskDeleted}
-              onEditTask={handleEditTask}
+              currentUser={currentUser}
+              onUserCreated={handleUserCreated}
+              onUserUpdated={handleUserUpdated}
+              onUserDeleted={handleUserDeleted}
             />
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Task Form Modal */}
@@ -262,6 +331,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
           users={users}
           onTaskCreated={handleTaskCreated}
           onTaskUpdated={handleTaskUpdated}
+          onError={handleTaskFormError}
           onClose={() => {
             setShowTaskForm(false)
             setEditingTask(null)

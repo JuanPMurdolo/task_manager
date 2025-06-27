@@ -13,8 +13,8 @@ interface Task {
   id: number
   title: string
   description: string
-  status: "pending" | "in_progress" | "completed"
-  priority: "low" | "medium" | "high"
+  status: "pending" | "hold" | "in_progress" | "completed" | "cancelled"
+  priority: "low" | "medium" | "high" | "urgent"
   due_date: string | null
   created_at: string
   updated_at: string

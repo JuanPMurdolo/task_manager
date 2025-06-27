@@ -241,7 +241,7 @@ async def update_task_status(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    if status not in ["pending", "in_progress", "completed"]:
+    if status not in ["pending", "in_progress", "completed", "hold", "cancelled"]:
         raise HTTPException(status_code=400, detail="Invalid status")
 
     task.status = status
