@@ -63,7 +63,11 @@ async def update_task_in_db(db: AsyncSession, task_id: int, task_data: TaskUpdat
     task = await db.get(Task, task_id)
     if not task:
         return None
-
+    
+    if task_data.title is not None:
+        task.title = task_data.title
+    if task_data.description is not None:
+        task.description = task_data.description
     if task_data.status is not None:
         task.status = task_data.status
     if task_data.priority is not None:

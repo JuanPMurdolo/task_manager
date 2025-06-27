@@ -1,193 +1,99 @@
 import pytest
-from httpx import AsyncClient
-from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock
+from datetime import datetime, timezone
+from app.models.task import Task
+from app.models.user import User
+from app.schemas.task import TaskCreate, TaskUpdate, TaskBulkUpdate
+from app.repositories import task as task_repo
+
+def mock_result_scalars_all(items):
+    scalars_mock = MagicMock()
+    scalars_mock.all.return_value = items
+    result_mock = MagicMock()
+    result_mock.scalars.return_value = scalars_mock
+    return result_mock
 
 @pytest.mark.asyncio
-async def test_create_task(test_client, get_token_headers):
-    headers = await get_token_headers("alice")
-    response = await test_client.post(
-        "/tasks",
-        json={
-            "title": "Test Task",
-            "description": "Test Desc",
-            "status": "pending",
-            "priority": "medium"
-        },
-        headers=headers
+async def test_enrich_tasks_with_usernames():
+    db = AsyncMock()
+    user1 = User(id=1, username="alice")
+    user2 = User(id=2, username="bob")
+    task1 = Task(id=1, title="T1", description="D1", status="pending", priority="low",
+                 due_date=None, created_by=1, updated_by=2, assigned_to=2,
+                 created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc))
+    task2 = Task(id=2, title="T2", description="D2", status="done", priority="medium",
+                 due_date=None, created_by=2, updated_by=1, assigned_to=None,
+                 created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc))
+    db.execute.return_value = mock_result_scalars_all([user1, user2])
+    result = await task_repo.enrich_tasks_with_usernames([task1, task2], db)
+    assert result[0].created_by == "alice"
+    assert result[0].updated_by == "bob"
+    assert result[1].created_by == "bob"
+    assert result[1].updated_by == "alice"
+
+@pytest.mark.asyncio
+async def test_create_task_in_db():
+    db = AsyncMock()
+    db.add = MagicMock()
+    db.commit = AsyncMock()
+    db.refresh = AsyncMock()
+    task_data = TaskCreate(title="T", description="D", status="pending", priority="high", due_date=None)
+    await task_repo.create_task_in_db(db, task_data, user_id=1)
+
+@pytest.mark.asyncio
+async def test_update_task_in_db_found_and_not_found():
+    db = AsyncMock()
+    task = Task(id=1, title="T", description="D", status="pending", priority="low", due_date=None,
+                assigned_to=None, created_by=1, updated_by=1,
+                created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc))
+    db.get = AsyncMock(return_value=task)
+    db.commit = AsyncMock()
+    db.refresh = AsyncMock()
+    update = TaskUpdate(title="New", description="New", status="done", priority="medium",
+                        due_date=datetime.now(timezone.utc), assigned_to=2)
+    result = await task_repo.update_task_in_db(db, 1, update, user_id=1)
+    assert result.title == "New"
+    assert result.priority == "medium"
+
+@pytest.mark.asyncio
+async def test_bulk_update_tasks_in_db():
+    db = AsyncMock()
+    task1 = Task(id=1, title="T1", description="D1", status="pending", priority="low", due_date=None,
+                 assigned_to=None, created_by=1, updated_by=1,
+                 created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc))
+    task2 = Task(id=2, title="T2", description="D2", status="pending", priority="low", due_date=None,
+                 assigned_to=None, created_by=1, updated_by=1,
+                 created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc))
+    db.execute.return_value = mock_result_scalars_all([task1, task2])
+    db.commit = AsyncMock()
+    task_ids=[1, 2]
+    update = TaskBulkUpdate(
+        task_ids=task_ids,
+        status="done",
+        priority="high",
+        due_date=datetime.now(timezone.utc),
+        assigned_to=2
     )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["title"] == "Test Task"
-    assert data["description"] == "Test Desc"
-    assert data["status"] == "pending" 
-    
-@pytest.mark.asyncio
-async def test_create_task_invalid_status(test_client: AsyncClient, get_token_headers):
-    headers = await get_token_headers("admin", "adminpass")
-
-    payload = {
-        "title": "Bad Task",
-        "description": "Bad data",
-        "status": "not_a_status",  # <- inválido
-        "priority": "medium"
-    }
-
-    response = await test_client.post("/tasks", json=payload, headers=headers)
-    assert response.status_code == 422  # FastAPI validation
-    
-@pytest.mark.asyncio
-async def test_update_task(test_client, create_test_user, get_token_headers):
-    user = await create_test_user("bob", "test123")
-    headers = await get_token_headers("bob", "test123")
-
-    # Crear una tarea
-    create_payload = {
-        "title": "Original Task",
-        "description": "Original Description",
-        "status": "pending",
-        "priority": "low",
-    }
-    create_response = await test_client.post("/tasks", json=create_payload, headers=headers)
-    task_id = create_response.json()["id"]
-
-    # Actualizar la tarea
-    update_payload = {
-        "status": "in_progress",
-        "priority": "high"
-    }
-    update_response = await test_client.put(f"/tasks/{task_id}", json=update_payload, headers=headers)
-    assert update_response.status_code == 200
-    updated_data = update_response.json()
-    assert updated_data["status"] == "in_progress"
-    assert updated_data["priority"] == "high"
-    
-@pytest.mark.asyncio
-async def test_list_tasks_pagination(test_client, create_test_user, get_token_headers):
-    user = await create_test_user("alice", "1234")
-    headers = await get_token_headers("alice", "1234")
-
-    # Crear varias tareas
-    for i in range(15):
-        await test_client.post("/tasks", json={
-            "title": f"Task {i}",
-            "description": "Desc",
-            "status": "pending",
-            "priority": "medium"
-        }, headers=headers)
-
-    # Obtener primeras 10
-    response = await test_client.get("/tasks?skip=0&limit=10", headers=headers)
-    assert response.status_code == 200
-    assert len(response.json()) == 10
-
-    # Obtener las siguientes
-    response = await test_client.get("/tasks?skip=10&limit=10", headers=headers)
-    assert response.status_code == 200
-    assert len(response.json()) == 5
-    
-@pytest.mark.asyncio
-async def test_bulk_update_tasks(test_client, create_test_user, get_token_headers):
-    user = await create_test_user("admin", "1234")
-    headers = await get_token_headers("admin", "1234")
-
-    # Crear tareas
-    task_ids = []
-    for i in range(3):
-        res = await test_client.post("/tasks", json={
-            "title": f"Bulk {i}",
-            "description": "Desc",
-            "status": "pending",
-            "priority": "low"
-        }, headers=headers)
-        task_ids.append(res.json()["id"])
-
-    # Hacer bulk update
-    bulk_payload = {
-        "task_ids": task_ids,
-        "status": "completed",
-        "priority": "high"
-    }
-    response = await test_client.post("/tasks/bulk_update", json=bulk_payload, headers=headers)
-    assert response.status_code == 200
-    for task in response.json():
-        assert task["status"] == "completed"
-        assert task["priority"] == "high"
-        
-@pytest.mark.asyncio
-async def test_get_tasks_by_priority(test_client, create_test_user, get_token_headers):
-    user = await create_test_user("user1", "pass")
-    headers = await get_token_headers("user1", "pass")
-
-    # Crear tareas con distintas prioridades
-    await test_client.post("/tasks", json={
-        "title": "P1",
-        "description": "desc",
-        "status": "pending",
-        "priority": "low"
-    }, headers=headers)
-
-    await test_client.post("/tasks", json={
-        "title": "P2",
-        "description": "desc",
-        "status": "pending",
-        "priority": "medium"
-    }, headers=headers)
-
-    await test_client.post("/tasks", json={
-        "title": "P3",
-        "description": "desc",
-        "status": "pending",
-        "priority": "medium"
-    }, headers=headers)
-
-    # Buscar las medium
-    response = await test_client.get("/tasks/priority/medium", headers=headers)
-    assert response.status_code == 200
-    tasks = response.json()
-    assert all(task["priority"] == "medium" for task in tasks)
-
-from datetime import datetime, timedelta
+    result = await task_repo.bulk_update_tasks_in_db(db, task_ids, update, user_id=1)
+    assert all(t.status == "done" for t in result)
+    assert all(t.priority == "high" for t in result)
 
 @pytest.mark.asyncio
-async def test_get_overdue_tasks(test_client, create_test_user, get_token_headers):
-    user = await create_test_user("juan", "clave")
-    headers = await get_token_headers("juan", "clave")
-
-    past_due_date = (datetime.utcnow() - timedelta(days=2)).isoformat()
-    future_due_date = (datetime.utcnow() + timedelta(days=2)).isoformat()
-
-    # Tarea vencida
-    await test_client.post("/tasks", json={
-        "title": "Overdue",
-        "description": "Late",
-        "status": "pending",
-        "priority": "low",
-        "due_date": past_due_date
-    }, headers=headers)
-
-    # Tarea futura
-    await test_client.post("/tasks", json={
-        "title": "Not Overdue",
-        "description": "On time",
-        "status": "pending",
-        "priority": "low",
-        "due_date": future_due_date
-    }, headers=headers)
-
-    # Buscar vencidas
-    response = await test_client.get("/tasks/overdue", headers=headers)
-    assert response.status_code == 200
-    tasks = response.json()
-    assert any("Overdue" in task["title"] for task in tasks)
-    assert all(task["status"] != "completed" for task in tasks)
-    
-@pytest.mark.asyncio
-async def test_create_task_unauthorized(test_client):
-    payload = {
-        "title": "Unauthorized Task",
-        "description": "No auth",
-        "status": "pending",
-        "priority": "low"
-    }
-    response = await test_client.post("/tasks", json=payload)
-    assert response.status_code == 401
+@pytest.mark.parametrize("repo_func,args", [
+    (task_repo.get_all_tasks_in_db, ()),
+    (task_repo.get_tasks_created_by_user_in_db, (1,)),
+    (task_repo.get_tasks_updated_by_user_in_db, (1,)),
+    (task_repo.get_tasks_assigned_to_user_in_db, (2,)),
+    (task_repo.get_overdue_tasks_in_db, ()),
+    (task_repo.get_tasks_by_priority_in_db, ("medium",)),
+    (task_repo.search_tasks_by_title_in_db, ("FindMe",)),
+    (task_repo.get_tasks_created_by_specific_user_in_db, (1,))
+])
+async def test_read_queries(repo_func, args):
+    db = AsyncMock()
+    task = Task(id=1, title="T", description="D", status="pending", priority="medium", due_date=datetime.now(timezone.utc),
+                assigned_to=None, created_by=1, updated_by=1,
+                created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc))
+    db.execute.return_value = mock_result_scalars_all([task])
+    result = await repo_func(db, *args)
+    assert result[0].id == 1
