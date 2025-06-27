@@ -4,13 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from datetime import datetime
 
-from app.models import Task, User
-from app.schemas import TaskCommentResponse, TaskUpdate, UserCreate, UserResponse
+from app.models.user import User
+from app.models.task import Task
+from app.schemas.task import TaskCommentResponse, TaskUpdate, TaskBulkUpdate, TaskResponse, TaskComment, TaskCommentResponse, PaginationParams, TaskCreate
+from app.schemas.user import UserResponse, UserCreate
 from app.database import get_db
-from app.schemas import (
-    TaskBulkUpdate, TaskResponse, TaskComment, TaskCommentResponse,
-    PaginationParams, TaskCreate
-)
 from app.auth import get_current_user
 
 router = APIRouter()

@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.middleware.cors import CORSMiddleware
 
 
-from app.api import router as api_router
-from app.auth_router import router as auth_router
+from app.routers.task import router as api_router
+from app.routers.auth import router as auth_router
 from app.database import init_db, AsyncSessionLocal
 
 app = FastAPI(

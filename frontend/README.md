@@ -34,3 +34,40 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+---
+
+## ⚛️ `README.md` para el **Frontend (React + Tailwind + Radix UI)**
+
+```markdown
+# Frontend - Task Management Dashboard
+
+Este es el panel de usuario para gestionar tareas, construido con **React**, **TailwindCSS**, **Radix UI** y desplegado en **Vercel**.
+
+## 🧰 Requisitos
+
+- Node.js 18+
+- npm o yarn
+- Backend corriendo en `http://localhost:8000` (por defecto)
+
+## 📦 Instalación
+
+1. Clona el repositorio:
+
+```bash
+git clone https://github.com/tu_usuario/frontend-task-dashboard.git
+cd frontend-task-dashboard
+npm install or yarn install
+npm run dev
+```
+
+Abre http://localhost:3000 en el navegador.
+
+🧪 Features
+* Login con JWT (guardado en localStorage)
+* Vista de tareas asignadas
+* Creación, edición y eliminación de tareas
+* Filtros rápidos por estado y prioridad
+* Vista responsive (desktop y mobile)
+* Acciones rápidas para cambiar estado
+

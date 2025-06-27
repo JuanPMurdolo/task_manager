@@ -6,9 +6,9 @@ from datetime import timedelta, datetime
 from typing import Optional
 from passlib.context import CryptContext
 
-from app.models import User
+from app.models.user import User
 from app.database import get_db
-from app.schemas import LoginResponse, LoginRequest, UserResponse, UserCreate
+from app.schemas.user import LoginResponse, LoginRequest, UserResponse, UserCreate
 from app.auth import authenticate_user, create_access_token, get_current_user
 
 router = APIRouter()
