@@ -8,22 +8,28 @@ export const mockTasks = [
   {
     id: 1,
     title: "Test Task 1",
-    description: "Test description 1",
+    description: "Description 1",
     status: "pending",
     priority: "high",
     assigned_to: 1,
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
+    created_at: "2023-01-01",
+    updated_at: "2023-01-02",
+    due_date: "2023-01-10",
+    created_by: 1,
+    updated_by: 1
   },
   {
     id: 2,
     title: "Test Task 2",
-    description: "Test description 2",
-    status: "in_progress",
-    priority: "medium",
+    description: "Description 2",
+    status: "completed",
+    priority: "low",
     assigned_to: 2,
-    created_at: "2024-01-02T00:00:00Z",
-    updated_at: "2024-01-02T00:00:00Z",
+    created_at: "2023-01-03",
+    updated_at: "2023-01-04",
+    due_date: "2023-01-15",
+    created_by: 2,
+    updated_by: 2
   },
   {
     id: 3,
@@ -73,25 +79,27 @@ export const mockFetchSuccess = (data: any) => {
   return jest.fn().mockResolvedValue({
     ok: true,
     status: 200,
-    json: jest.fn().mockResolvedValue(data),
-  } as Response)
+    json: async () => data,
+  })
 }
 
 export const mockFetchError = (status = 400, message = "Error") => {
   return jest.fn().mockResolvedValue({
     ok: false,
     status,
-    json: jest.fn().mockResolvedValue({ detail: message }),
-  } as Response)
+    json: async () => ({ detail: message }),
+  })
 }
 
 export const mockFetchReject = (error = "Network error") => {
   return jest.fn().mockRejectedValue(new Error(error))
 }
 
+
 // Custom render function
 const customRender = (ui: React.ReactElement, options?: Omit<RenderOptions, "wrapper">) => {
   return render(ui, {
+    container: document.body,
     ...options,
   })
 }

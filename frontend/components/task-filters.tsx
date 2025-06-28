@@ -113,14 +113,13 @@ export function TaskFilters({ tasks, users, onFiltersChange }: TaskFiltersProps)
   const hasActiveFilters = Object.values(filters).some((value) => value !== "")
 
   const getUserInitials = (user: any) => {
-    if (user.full_name) {
-      return user.full_name
-        .split(" ")
-        .map((n: any[]) => n[0])
-        .join("")
-        .toUpperCase()
-    }
-    return user.username.substring(0, 2).toUpperCase()
+    const name = user?.full_name ?? user?.username ?? ""
+    if (typeof name !== "string") return "??"
+    return name
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
   }
 
   // Get unique users who have created tasks
