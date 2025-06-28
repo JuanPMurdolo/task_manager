@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { X, Flag, FileText } from "lucide-react"
 
-interface Task {
+export interface Task {
   id: number
   title: string
   description: string
@@ -185,11 +185,11 @@ export function TaskForm({ task, users, onTaskCreated, onTaskUpdated, onError, o
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="priority" className="text-white">
+                <Label id="priority-label" htmlFor="priority" className="text-white">
                   Priority
                 </Label>
                 <Select value={formData.priority} onValueChange={(value) => handleInputChange("priority", value)}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectTrigger aria-labelledby="priority-label" className="bg-white/10 border-white/20 text-white">
                     <div className="flex items-center">
                       <Flag className="h-4 w-4 mr-2 text-gray-400" />
                       <SelectValue placeholder="Select priority" />
