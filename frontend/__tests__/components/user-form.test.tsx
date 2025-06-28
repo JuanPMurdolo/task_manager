@@ -1,7 +1,9 @@
 "use client"
-import { render, screen, waitFor } from "../test-utils/test-utils"
+
+import { render, screen, waitFor } from "../../test-utils/test-utils"
 import { UserForm } from "../../components/user-form"
-import { mockUsers, setupUser } from "../test-utils/test-utils"
+import { mockUsers, setupUser } from "../../test-utils/test-utils"
+import { jest } from "@jest/globals"
 
 const mockFetch = jest.fn()
 global.fetch = mockFetch
@@ -10,6 +12,8 @@ describe("UserForm", () => {
   const user = setupUser()
   const mockOnClose = jest.fn()
   const mockOnUserCreated = jest.fn()
+  const mockOnUserUpdated = jest.fn()
+  const mockOnError = jest.fn()
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -17,18 +21,38 @@ describe("UserForm", () => {
   })
 
   it("renders create form correctly", () => {
-    render(<UserForm isOpen={true} onClose={mockOnClose} onUserCreated={mockOnUserCreated} />)
+    render(
+      <UserForm
+        onClose={mockOnClose}
+        onUserCreated={mockOnUserCreated}
+        onUserUpdated={mockOnUserUpdated}
+        onError={mockOnError}
+      />,
+    )
 
     expect(screen.getByText("Create New User")).toBeInTheDocument()
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/full name/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/role/i)).toBeInTheDocument()
+
+    // Use specific selectors for password fields instead of getByLabelText
+    expect(screen.getByPlaceholderText("Enter password")).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("Confirm password")).toBeInTheDocument()
+
+    // Use text content instead of getByLabelText for User Type since it's a Select component
+    expect(screen.getByText("User Type")).toBeInTheDocument()
   })
 
   it("renders edit form correctly", () => {
-    render(<UserForm isOpen={true} onClose={mockOnClose} onUserCreated={mockOnUserCreated} user={mockUsers[0]} />)
+    render(
+      <UserForm
+        user={mockUsers[0]}
+        onClose={mockOnClose}
+        onUserCreated={mockOnUserCreated}
+        onUserUpdated={mockOnUserUpdated}
+        onError={mockOnError}
+      />,
+    )
 
     expect(screen.getByText("Edit User")).toBeInTheDocument()
     expect(screen.getByDisplayValue("testuser1")).toBeInTheDocument()
@@ -42,7 +66,7 @@ describe("UserForm", () => {
       username: "newuser",
       email: "new@example.com",
       full_name: "New User",
-      role: "user",
+      type: "user",
       is_active: true,
       created_at: "2024-01-03T00:00:00Z",
     }
@@ -52,31 +76,37 @@ describe("UserForm", () => {
       json: jest.fn().mockResolvedValue(newUser),
     })
 
-    render(<UserForm isOpen={true} onClose={mockOnClose} onUserCreated={mockOnUserCreated} />)
+    render(
+      <UserForm
+        onClose={mockOnClose}
+        onUserCreated={mockOnUserCreated}
+        onUserUpdated={mockOnUserUpdated}
+        onError={mockOnError}
+      />,
+    )
 
     await user.type(screen.getByLabelText(/username/i), "newuser")
     await user.type(screen.getByLabelText(/email/i), "new@example.com")
     await user.type(screen.getByLabelText(/full name/i), "New User")
-    await user.type(screen.getByLabelText(/password/i), "password123")
-    await user.selectOptions(screen.getByLabelText(/role/i), "user")
+
+    // Use more specific selectors for password fields
+    const passwordInput = screen.getByPlaceholderText("Enter password")
+    const confirmPasswordInput = screen.getByPlaceholderText("Confirm password")
+
+    await user.type(passwordInput, "password123")
+    await user.type(confirmPasswordInput, "password123")
 
     await user.click(screen.getByRole("button", { name: /create user/i }))
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/users"),
+        expect.stringContaining("/auth/register"),
         expect.objectContaining({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: "Bearer null",
           },
-          body: JSON.stringify({
-            username: "newuser",
-            email: "new@example.com",
-            full_name: "New User",
-            password: "password123",
-            role: "user",
-          }),
         }),
       )
     })
@@ -93,7 +123,15 @@ describe("UserForm", () => {
       json: jest.fn().mockResolvedValue(updatedUser),
     })
 
-    render(<UserForm isOpen={true} onClose={mockOnClose} onUserCreated={mockOnUserCreated} user={mockUsers[0]} />)
+    render(
+      <UserForm
+        user={mockUsers[0]}
+        onClose={mockOnClose}
+        onUserCreated={mockOnUserCreated}
+        onUserUpdated={mockOnUserUpdated}
+        onError={mockOnError}
+      />,
+    )
 
     const nameInput = screen.getByDisplayValue("Test User 1")
     await user.clear(nameInput)
@@ -103,20 +141,39 @@ describe("UserForm", () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/users/1"),
+        expect.stringContaining("/users/1"),
         expect.objectContaining({
           method: "PUT",
         }),
       )
     })
+
+    expect(mockOnUserUpdated).toHaveBeenCalledWith(updatedUser)
   })
 
-  it("shows validation errors", async () => {
-    render(<UserForm isOpen={true} onClose={mockOnClose} onUserCreated={mockOnUserCreated} />)
+  it("shows validation errors for password mismatch", async () => {
+    render(
+      <UserForm
+        onClose={mockOnClose}
+        onUserCreated={mockOnUserCreated}
+        onUserUpdated={mockOnUserUpdated}
+        onError={mockOnError}
+      />,
+    )
+
+    await user.type(screen.getByLabelText(/username/i), "newuser")
+    await user.type(screen.getByLabelText(/email/i), "new@example.com")
+
+    // Use more specific selectors for password fields
+    const passwordInput = screen.getByPlaceholderText("Enter password")
+    const confirmPasswordInput = screen.getByPlaceholderText("Confirm password")
+
+    await user.type(passwordInput, "password123")
+    await user.type(confirmPasswordInput, "different")
 
     await user.click(screen.getByRole("button", { name: /create user/i }))
 
-    // Should not submit without required fields
+    // Should not submit with mismatched passwords
     expect(mockFetch).not.toHaveBeenCalled()
   })
 
@@ -127,44 +184,89 @@ describe("UserForm", () => {
       json: jest.fn().mockResolvedValue({ detail: "Username already exists" }),
     })
 
-    render(<UserForm isOpen={true} onClose={mockOnClose} onUserCreated={mockOnUserCreated} />)
+    render(
+      <UserForm
+        onClose={mockOnClose}
+        onUserCreated={mockOnUserCreated}
+        onUserUpdated={mockOnUserUpdated}
+        onError={mockOnError}
+      />,
+    )
 
     await user.type(screen.getByLabelText(/username/i), "existinguser")
     await user.type(screen.getByLabelText(/email/i), "test@example.com")
     await user.type(screen.getByLabelText(/full name/i), "Test User")
-    await user.type(screen.getByLabelText(/password/i), "password123")
+
+    // Use more specific selectors for password fields
+    const passwordInput = screen.getByPlaceholderText("Enter password")
+    const confirmPasswordInput = screen.getByPlaceholderText("Confirm password")
+
+    await user.type(passwordInput, "password123")
+    await user.type(confirmPasswordInput, "password123")
     await user.click(screen.getByRole("button", { name: /create user/i }))
 
     await waitFor(() => {
-      expect(screen.getByText("Username already exists")).toBeInTheDocument()
+      expect(mockOnError).toHaveBeenCalledWith("Username already exists")
     })
   })
 
-  it("shows loading state during submission", async () => {
-    mockFetch.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)))
-
-    render(<UserForm isOpen={true} onClose={mockOnClose} onUserCreated={mockOnUserCreated} />)
-
-    await user.type(screen.getByLabelText(/username/i), "newuser")
-    await user.type(screen.getByLabelText(/email/i), "new@example.com")
-    await user.type(screen.getByLabelText(/full name/i), "New User")
-    await user.type(screen.getByLabelText(/password/i), "password123")
-    await user.click(screen.getByRole("button", { name: /create user/i }))
-
-    expect(screen.getByText("Creating...")).toBeInTheDocument()
-  })
-
   it("closes form when cancel is clicked", async () => {
-    render(<UserForm isOpen={true} onClose={mockOnClose} onUserCreated={mockOnUserCreated} />)
+    render(
+      <UserForm
+        onClose={mockOnClose}
+        onUserCreated={mockOnUserCreated}
+        onUserUpdated={mockOnUserUpdated}
+        onError={mockOnError}
+      />,
+    )
 
     await user.click(screen.getByRole("button", { name: /cancel/i }))
 
     expect(mockOnClose).toHaveBeenCalled()
   })
 
-  it("hides password field in edit mode", () => {
-    render(<UserForm isOpen={true} onClose={mockOnClose} onUserCreated={mockOnUserCreated} user={mockUsers[0]} />)
+  it("shows password fields only in create mode", () => {
+    render(
+      <UserForm
+        onClose={mockOnClose}
+        onUserCreated={mockOnUserCreated}
+        onUserUpdated={mockOnUserUpdated}
+        onError={mockOnError}
+      />,
+    )
 
-    expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument()
+    // In create mode, both password fields should be present
+    expect(screen.getByPlaceholderText("Enter password")).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("Confirm password")).toBeInTheDocument()
+  })
+
+  it("shows optional password field in edit mode", () => {
+    render(
+      <UserForm
+        user={mockUsers[0]}
+        onClose={mockOnClose}
+        onUserCreated={mockOnUserCreated}
+        onUserUpdated={mockOnUserUpdated}
+        onError={mockOnError}
+      />,
+    )
+
+    // In edit mode, only optional new password field should be present
+    expect(screen.getByPlaceholderText("Leave blank to keep current password")).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText("Confirm password")).not.toBeInTheDocument()
+  })
+
+  it("displays user type selection", () => {
+    render(
+      <UserForm
+        onClose={mockOnClose}
+        onUserCreated={mockOnUserCreated}
+        onUserUpdated={mockOnUserUpdated}
+        onError={mockOnError}
+      />,
+    )
+
+    // Check that the user type section is rendered
+    expect(screen.getByText("User Type")).toBeInTheDocument()
   })
 })

@@ -1,12 +1,8 @@
-import { render, screen, waitFor } from "../test-utils/test-utils"
+import { render, screen, waitFor } from "../../test-utils/test-utils"
 import userEvent from "@testing-library/user-event"
 import { TaskDashboard } from "../../components/task-dashboard"
-import {
-  mockTasks,
-  mockUsers,
-  mockCurrentUser,
-  setupUser,
-} from "../test-utils/test-utils"
+import { mockTasks, mockUsers, mockCurrentUser, setupUser } from "../../test-utils/test-utils"
+import { jest } from "@jest/globals"
 
 // Mock fetch global
 const mockFetch = jest.fn()
@@ -48,11 +44,13 @@ describe("TaskDashboard", () => {
 
   it("renders dashboard correctly", async () => {
     render(<TaskDashboard onLogout={mockOnLogout} />)
-    screen.debug()
 
     await waitFor(() => {
+      // Use a function matcher to handle split text
       expect(
-        screen.getByText((_, el) => el?.textContent === "TASK MANAGER")
+        screen.getByText((content, element) => {
+          return element?.textContent === "TASK MANAGER"
+        }),
       ).toBeInTheDocument()
       expect(screen.getByText(/welcome back/i)).toBeInTheDocument()
     })
@@ -62,11 +60,12 @@ describe("TaskDashboard", () => {
     render(<TaskDashboard onLogout={mockOnLogout} />)
 
     await waitFor(() => {
-      expect(screen.getByText("Total Tasks")).toBeInTheDocument()
-      expect(screen.getByText("Completed")).toBeInTheDocument()
-      expect(screen.getByText("In Progress")).toBeInTheDocument()
-      expect(screen.getByText("Pending")).toBeInTheDocument()
-      expect(screen.getByText("Assigned to Me")).toBeInTheDocument()
+      // Look for statistics card headings specifically
+      expect(screen.getByRole("heading", { name: "Total Tasks" })).toBeInTheDocument()
+      expect(screen.getByRole("heading", { name: "Completed" })).toBeInTheDocument()
+      expect(screen.getByRole("heading", { name: "In Progress" })).toBeInTheDocument()
+      expect(screen.getByRole("heading", { name: "Pending" })).toBeInTheDocument()
+      expect(screen.getByRole("heading", { name: "Assigned to Me" })).toBeInTheDocument()
     })
   })
 
@@ -80,7 +79,8 @@ describe("TaskDashboard", () => {
     await userEvent.click(screen.getByRole("tab", { name: /user management/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByText("User Management")[0]).toBeInTheDocument()
+      // Look for the heading specifically, not just any "User Management" text
+      expect(screen.getByRole("heading", { name: "User Management" })).toBeInTheDocument()
     })
   })
 
@@ -94,12 +94,24 @@ describe("TaskDashboard", () => {
     await userEvent.click(screen.getByRole("button", { name: /new task/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/create/i)).toBeInTheDocument()
+      expect(screen.getByText("Create New Task")).toBeInTheDocument()
     })
   })
 
   it("shows loading state initially", () => {
     render(<TaskDashboard onLogout={mockOnLogout} />)
     expect(screen.getByTestId("loading-spinner")).toBeInTheDocument()
+  })
+
+  it("handles logout", async () => {
+    render(<TaskDashboard onLogout={mockOnLogout} />)
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /logout/i })).toBeInTheDocument()
+    })
+
+    await userEvent.click(screen.getByRole("button", { name: /logout/i }))
+
+    expect(mockOnLogout).toHaveBeenCalled()
   })
 })

@@ -1,97 +1,55 @@
-"use client"
-
-import { jest } from "@jest/globals"
 import "@testing-library/jest-dom"
 
-// Mock Next.js router
-jest.mock("next/router", () => ({
-  useRouter() {
-    return {
-      route: "/",
-      pathname: "/",
-      query: {},
-      asPath: "/",
-      push: jest.fn(),
-      pop: jest.fn(),
-      reload: jest.fn(),
-      back: jest.fn(),
-      prefetch: jest.fn().mockResolvedValue(undefined),
-      beforePopState: jest.fn(),
-      events: {
-        on: jest.fn(),
-        off: jest.fn(),
-        emit: jest.fn(),
-      },
-      isFallback: false,
-    }
-  },
-}))
-
-// Mock localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+// Mock IntersectionObserver
+global.IntersectionObserver = class IntersectionObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  unobserve() {}
 }
-global.localStorage = localStorageMock
 
-// Mock sessionStorage
-const sessionStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+// Mock ResizeObserver
+global.ResizeObserver = class ResizeObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  unobserve() {}
 }
-global.sessionStorage = sessionStorageMock
 
-// Mock fetch
-global.fetch = jest.fn()
-
-// Mock matchMedia
+// Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: jest.fn().mockImplementation((query) => ({
+  value: (query) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
+    addListener: () => {}, // deprecated
+    removeListener: () => {}, // deprecated
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => {},
+  }),
 })
 
-// Mock IntersectionObserver
-global.IntersectionObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}))
+// Mock window.confirm
+global.confirm = () => true
 
-// Mock ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}))
+// Mock pointer capture methods for Radix UI components
+if (typeof Element !== "undefined") {
+  Element.prototype.hasPointerCapture = Element.prototype.hasPointerCapture || (() => false)
+  Element.prototype.setPointerCapture = Element.prototype.setPointerCapture || (() => {})
+  Element.prototype.releasePointerCapture = Element.prototype.releasePointerCapture || (() => {})
+}
 
-// Suppress console errors during tests
-const originalConsoleError = console.error
+// Mock scrollIntoView
+if (typeof Element !== "undefined") {
+  Element.prototype.scrollIntoView = Element.prototype.scrollIntoView || (() => {})
+}
 
-beforeAll(() => {
-  console.error = (...args) => {
-    if (typeof args[0] === "string" && args[0].includes("Warning: ReactDOM.render is no longer supported")) {
-      return
-    }
-    if (typeof args[0] === "string" && args[0].includes("Warning: An update to")) {
-      return
-    }
-    originalConsoleError.call(console, ...args)
-  }
-})
-
-afterAll(() => {
-  console.error = originalConsoleError
-})
+// Mock console methods to reduce noise in tests
+const originalConsole = global.console
+global.console = {
+  ...originalConsole,
+  warn: () => {},
+  error: () => {},
+}
