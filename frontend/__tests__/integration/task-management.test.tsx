@@ -1,7 +1,8 @@
-import { render, screen, waitFor,  mockTasks, mockUsers, mockCurrentUser, setupUser } from "../../test-utils/test-utils"
+import { render, screen, waitFor, mockTasks, mockUsers, mockCurrentUser, setupUser } from "../../test-utils/test-utils"
 import { TaskDashboard } from "../../components/task-dashboard"
 import { jest } from "@jest/globals"
 
+// Mock fetch global
 const mockFetch = jest.fn()
 global.fetch = mockFetch
 
@@ -299,24 +300,35 @@ describe("Task Management Integration", () => {
       ).toBeInTheDocument()
     })
 
-    // Wait for statistics cards to appear
+    // Wait for statistics cards to appear - use Testing Library methods
     await waitFor(() => {
-      expect(screen.getByText("Total Tasks")).toBeInTheDocument()
-      expect(screen.getByText("Completed")).toBeInTheDocument()
-      expect(screen.getByText("In Progress")).toBeInTheDocument()
-      expect(screen.getByText("Pending")).toBeInTheDocument()
-      expect(screen.getByText("Assigned to Me")).toBeInTheDocument()
+      // Find statistics cards by their specific structure within the stats grid
+      const statsGrid = document.querySelector(".grid.grid-cols-1.md\\:grid-cols-5.gap-4.mb-6")
+      expect(statsGrid).toBeInTheDocument()
+
+      // Find card titles within the statistics grid using proper DOM methods
+      const cardTitles = Array.from(statsGrid?.querySelectorAll("h3") || [])
+      const titleTexts = cardTitles.map((el) => el.textContent)
+
+      expect(titleTexts).toContain("Total Tasks")
+      expect(titleTexts).toContain("Completed")
+      expect(titleTexts).toContain("In Progress")
+      expect(titleTexts).toContain("Pending")
+      expect(titleTexts).toContain("Assigned to Me")
     })
 
-    // Check that statistics show correct values
-    // Since we have 3 mock tasks, the total should be 3
-    const statisticsContainer = screen.getByText("Total Tasks").closest(".grid")
-    expect(statisticsContainer).toBeInTheDocument()
-
-    // Look for the number 3 somewhere in the statistics section
+    // Check that statistics show correct values by looking within the stats grid
     await waitFor(() => {
-      expect(screen.getByText("3")).toBeInTheDocument() // Total tasks
-      expect(screen.getByText("1")).toBeInTheDocument() // Should appear multiple times for different stats
+      const statsGrid = document.querySelector(".grid.grid-cols-1.md\\:grid-cols-5.gap-4.mb-6")
+
+      // Look for stat values within the statistics section
+      const statValues = Array.from(statsGrid?.querySelectorAll(".text-2xl.font-bold") || []).map(
+        (el) => el.textContent,
+      )
+
+      expect(statValues).toContain("3") // Total tasks
+      expect(statValues).toContain("1") // Should appear for completed, in_progress, pending counts
+      expect(statValues).toContain("2") // Assigned to me (testuser1 has 2 tasks assigned)
     })
   }, 10000) // 10 second timeout
 })
