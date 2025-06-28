@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckSquare, AlertCircle } from "lucide-react"
 
 interface LoginFormProps {
-  onLogin: () => void
+  onLogin: (user: any) => void
 }
 
 export function LoginForm({ onLogin }: LoginFormProps) {
@@ -47,7 +47,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         const data = await response.json()
         localStorage.setItem("token", data.access_token)
         localStorage.setItem("user", JSON.stringify(data.user))
-        onLogin()
+        onLogin(data.user)
       } else {
         const errorData = await response.json()
         setError(errorData.detail || "Login failed")
