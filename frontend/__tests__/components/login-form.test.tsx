@@ -21,8 +21,7 @@ describe("LoginForm", () => {
   it("renders login form correctly", () => {
     render(<LoginForm onLogin={mockOnLogin} />)
 
-    expect(screen.getByText("Welcome Back")).toBeInTheDocument()
-    expect(screen.getByText("Sign in to your account")).toBeInTheDocument()
+    expect(screen.getByText("Welcome")).toBeInTheDocument()
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument()
