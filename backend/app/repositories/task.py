@@ -43,7 +43,7 @@ class TaskRepository(AbstractTaskRepository):
             for t in tasks
         ]
 
-    async def create_task_in_db(db: AsyncSession, task_data: TaskCreate, user_id: int) -> Task:
+    async def create_task_in_db(self, task_data: TaskCreate, user_id: int) -> Task:
         now = datetime.utcnow()
         new_task = Task(
             title=task_data.title,
@@ -57,14 +57,14 @@ class TaskRepository(AbstractTaskRepository):
             created_at=now,
             updated_at=now,
         )
-        db.add(new_task)
-        await db.commit()
-        await db.refresh(new_task)
+        self.db.add(new_task)
+        await self.db.commit()
+        await self.db.refresh(new_task)
         return new_task
 
 
-    async def update_task_in_db(db: AsyncSession, task_id: int, task_data: TaskUpdate, user_id: int) -> Optional[Task]:
-        task = await db.get(Task, task_id)
+    async def update_task_in_db(self, task_id: int, task_data: TaskUpdate, user_id: int) -> Optional[Task]:
+        task = await self.db.get(Task, task_id)
         if not task:
             return None
 
@@ -84,13 +84,13 @@ class TaskRepository(AbstractTaskRepository):
         task.updated_by = user_id
         task.updated_at = datetime.utcnow()
 
-        await db.commit()
-        await db.refresh(task)
+        await self.db.commit()
+        await self.db.refresh(task)
         return task
 
 
-    async def bulk_update_tasks_in_db(db: AsyncSession, task_ids: List[int], update_data: TaskBulkUpdate, user_id: int) -> List[Task]:
-        result = await db.execute(select(Task).where(Task.id.in_(task_ids)))
+    async def bulk_update_tasks_in_db(self, task_ids: List[int], update_data: TaskBulkUpdate, user_id: int) -> List[Task]:
+        result = await self.db.execute(select(Task).where(Task.id.in_(task_ids)))
         tasks = result.scalars().all()
 
         for task in tasks:
@@ -106,7 +106,7 @@ class TaskRepository(AbstractTaskRepository):
             task.updated_by = user_id
             task.updated_at = datetime.utcnow()
 
-        await db.commit()
+        await self.db.commit()
         return tasks
 
 
@@ -115,50 +115,50 @@ class TaskRepository(AbstractTaskRepository):
         return result.scalars().all()
 
 
-    async def get_task_by_id_in_db(db: AsyncSession, task_id: int) -> Optional[Task]:
-        return await db.get(Task, task_id)
+    async def get_task_by_id_in_db(self, task_id: int) -> Optional[Task]:
+        return await self.db.get(Task, task_id)
 
 
-    async def get_tasks_created_by_user_in_db(db: AsyncSession, user_id: int) -> List[Task]:
-        result = await db.execute(select(Task).where(Task.created_by == user_id))
+    async def get_tasks_created_by_user_in_db(self, user_id: int) -> List[Task]:
+        result = await self.db.execute(select(Task).where(Task.created_by == user_id))
         return result.scalars().all()
 
 
-    async def get_tasks_updated_by_user_in_db(db: AsyncSession, user_id: int) -> List[Task]:
-        result = await db.execute(select(Task).where(Task.updated_by == user_id))
+    async def get_tasks_updated_by_user_in_db(self, user_id: int) -> List[Task]:
+        result = await self.db.execute(select(Task).where(Task.updated_by == user_id))
         return result.scalars().all()
 
 
-    async def get_tasks_assigned_to_user_in_db(db: AsyncSession, user_id: int) -> List[Task]:
-        result = await db.execute(select(Task).where(Task.assigned_to == user_id))
+    async def get_tasks_assigned_to_user_in_db(self, user_id: int) -> List[Task]:
+        result = await self.db.execute(select(Task).where(Task.assigned_to == user_id))
         return result.scalars().all()
 
 
-    async def get_overdue_tasks_in_db(db: AsyncSession) -> List[Task]:
+    async def get_overdue_tasks_in_db(self) -> List[Task]:
         now = datetime.utcnow()
-        result = await db.execute(select(Task).where(Task.due_date < now, Task.status != "completed"))
+        result = await self.db.execute(select(Task).where(Task.due_date < now, Task.status != "completed"))
         return result.scalars().all()
 
 
-    async def get_tasks_by_priority_in_db(db: AsyncSession, priority: int) -> List[Task]:
-        result = await db.execute(select(Task).where(Task.priority == priority))
+    async def get_tasks_by_priority_in_db(self, priority: int) -> List[Task]:
+        result = await self.db.execute(select(Task).where(Task.priority == priority))
         return result.scalars().all()
 
 
-    async def search_tasks_by_title_in_db(db: AsyncSession, query: str, skip: int = 0, limit: int = 100) -> List[Task]:
-        result = await db.execute(
+    async def search_tasks_by_title_in_db(self, query: str, skip: int = 0, limit: int = 100) -> List[Task]:
+        result = await self.db.execute(
             select(Task).where(Task.title.ilike(f"%{query}%")).offset(skip).limit(limit)
         )
         return result.scalars().all()
 
 
-    async def get_tasks_created_by_specific_user_in_db(db: AsyncSession, user_id: int) -> List[Task]:
-        result = await db.execute(select(Task).where(Task.created_by == user_id))
+    async def get_tasks_created_by_specific_user_in_db(self, user_id: int) -> List[Task]:
+        result = await self.db.execute(select(Task).where(Task.created_by == user_id))
         return result.scalars().all()
 
 
-    async def update_task_status_in_db(db: AsyncSession, task_id: int, status: str, user_id: int) -> Optional[Task]:
-        task = await db.get(Task, task_id)
+    async def update_task_status_in_db(self, task_id: int, status: str, user_id: int) -> Optional[Task]:
+        task = await self.db.get(Task, task_id)
         if not task:
             return None
 
@@ -166,6 +166,6 @@ class TaskRepository(AbstractTaskRepository):
         task.updated_by = user_id
         task.updated_at = datetime.utcnow()
 
-        await db.commit()
-        await db.refresh(task)
+        await self.db.commit()
+        await self.db.refresh(task)
         return task
