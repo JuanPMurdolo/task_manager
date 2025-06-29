@@ -3,9 +3,9 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from app.main import app
-from app.database import Base, get_db
+from app.core.database import Base, get_db
 from app.models.user import User
-from app.auth import create_access_token
+from app.core.auth import create_access_token
 from passlib.context import CryptContext
 from datetime import datetime
 

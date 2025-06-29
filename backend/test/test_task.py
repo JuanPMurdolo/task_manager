@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from app.models.task import Task
 from app.models.user import User
 from app.schemas.task import TaskCreate, TaskUpdate, TaskBulkUpdate
-from app.repositories import task as task_repo
+from app.repositories.task import TaskRepository as task_repo
 
 def mock_result_scalars_all(items):
     scalars_mock = MagicMock()
