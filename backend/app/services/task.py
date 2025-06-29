@@ -15,11 +15,7 @@ from app.repositories.task import enrich_tasks_with_usernames, create_task_in_db
     get_tasks_created_by_user_in_db, get_tasks_updated_by_user_in_db, get_tasks_assigned_to_user_in_db, get_overdue_tasks_in_db, \
     get_tasks_by_priority_in_db, search_tasks_by_title_in_db, update_task_status_in_db, get_task_by_id_in_db
 
-router = APIRouter()
 
-
-
-@router.post("/tasks", response_model=TaskResponse)
 async def create_task(
     task_data: TaskCreate,
     db: AsyncSession = Depends(get_db),
@@ -28,7 +24,6 @@ async def create_task(
     new_task = await create_task_in_db(db, task_data, current_user.id)
     return (await enrich_tasks_with_usernames([new_task], db))[0]
 
-@router.put("/tasks/{task_id}", response_model=TaskResponse)
 async def update_task(
     task_id: int,
     task_update: TaskUpdate,
@@ -42,7 +37,6 @@ async def update_task(
     
     return (await enrich_tasks_with_usernames([task], db))[0]
 
-@router.post("/tasks/bulk_update", response_model=List[TaskResponse])
 async def bulk_update_tasks(
     task_update: TaskBulkUpdate,
     db: AsyncSession = Depends(get_db),

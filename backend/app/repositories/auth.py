@@ -1,20 +1,24 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from passlib.context import CryptContext
+from fastapi import Depends
+from app.core.database import get_db
 
 from app.models.user import User
 
+db: AsyncSession = Depends(get_db)
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-async def get_user_by_username_in_db(db: AsyncSession, username: str):
+async def get_user_by_username_in_db(db, username: str):
     result = await db.execute(select(User).where(User.username == username))
     return result.scalar_one_or_none()
 
-async def get_user_by_email_in_db(db: AsyncSession, email: str):
+async def get_user_by_email_in_db(db, email: str):
     result = await db.execute(select(User).where(User.email == email))
     return result.scalar_one_or_none()
 
-async def create_user_in_db(db: AsyncSession, user_data, hashed: bool = False):
+async def create_user_in_db(db, user_data, hashed: bool = False):
     password = user_data.password
     hashed_password = password if hashed else pwd_context.hash(password)
 
@@ -32,6 +36,6 @@ async def create_user_in_db(db: AsyncSession, user_data, hashed: bool = False):
     await db.refresh(new_user)
     return new_user
 
-async def get_all_users_in_db(db: AsyncSession):
+async def get_all_users_in_db(db):
     result = await db.execute(select(User))
     return result.scalars().all()

@@ -7,9 +7,9 @@ from typing import List, Optional
 from passlib.context import CryptContext
 
 from app.models.user import User
-from app.database import get_db
+from app.core.database import get_db
 from app.schemas.user import LoginResponse, LoginRequest, UserResponse, UserCreate
-from app.auth import authenticate_user, create_access_token, get_current_user
+from app.core.auth import authenticate_user, create_access_token, get_current_user
 from app.repositories.auth import (
     get_user_by_username_in_db,
     get_user_by_email_in_db,

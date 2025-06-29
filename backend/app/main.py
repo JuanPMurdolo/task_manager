@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from app.routers.task import router as api_router
 from app.routers.auth import router as auth_router
-from app.database import init_db, AsyncSessionLocal
+from app.core.database import init_db, AsyncSessionLocal
 
 app = FastAPI(
     title="Lemon Challenge Task management",
