@@ -13,8 +13,7 @@ class TaskRepository(AbstractTaskRepository):
     def __init__(self, db: AsyncSession):
         self.db = db
         
-    @staticmethod
-    async def enrich_tasks_with_usernames(tasks: list[Task], db: AsyncSession) -> list[TaskResponse]:
+    async def enrich_tasks_with_usernames(self, tasks: list[Task]) -> list[TaskResponse]:
         user_ids = set()
         for task in tasks:
             if task.created_by:
@@ -24,7 +23,7 @@ class TaskRepository(AbstractTaskRepository):
             if task.assigned_to:
                 user_ids.add(task.assigned_to)
 
-        result = await db.execute(select(User).where(User.id.in_(user_ids)))
+        result = await self.db.execute(select(User).where(User.id.in_(user_ids)))
         user_map = {user.id: user.username for user in result.scalars().all()}
 
         return [
@@ -111,8 +110,8 @@ class TaskRepository(AbstractTaskRepository):
         return tasks
 
 
-    async def get_all_tasks_in_db(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Task]:
-        result = await db.execute(select(Task).offset(skip).limit(limit))
+    async def get_all_tasks_in_db(self, skip: int = 0, limit: int = 100) -> List[Task]:
+        result = await self.db.execute(select(Task).offset(skip).limit(limit))
         return result.scalars().all()
 
 
