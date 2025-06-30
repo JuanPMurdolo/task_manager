@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from app.routers.task import router as api_router
 from app.routers.auth import router as auth_router
-from app.core.database import init_db, AsyncSessionLocal
+from app.core.database import init_db, AsyncSessionLocal, create_admin
 
 app = FastAPI(
     title="Lemon Challenge Task management",
@@ -19,6 +19,7 @@ load_dotenv()
 @app.on_event("startup")
 async def startup_event():
     await init_db()
+    await create_admin()  # Ensure admin user is created on startup
 
 app.add_middleware(
     CORSMiddleware,

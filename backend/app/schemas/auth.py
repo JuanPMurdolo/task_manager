@@ -46,4 +46,3 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     is_active: Optional[bool] = None
     type: Optional[str] = None  # e.g., "admin", "user"
-

@@ -17,6 +17,7 @@ VENV_NAME=venv
 VENV_ACTIVATE=. $(VENV_NAME)/bin/activate
 REQUIREMENTS=requirements.txt
 
+
 # Help target
 .PHONY: help
 help: ## Show this help message
@@ -261,6 +262,10 @@ pre-commit: ## Run pre-commit checks
 	$(MAKE) lint
 	$(MAKE) test-fast
 	@echo "$(GREEN)✓ Pre-commit checks passed!$(NC)"
+
+restart-database:
+	rm -f tasks.db
+	$(MAKE) db-init
 
 # Default target
 .DEFAULT_GOAL := help

@@ -19,7 +19,7 @@ class User(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     # Relaciones con comentarios
-    comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="created_by_user")
 
     # Relaciones bidireccionales con Task
     tasks_created = relationship("Task", back_populates="creator", foreign_keys="Task.created_by")

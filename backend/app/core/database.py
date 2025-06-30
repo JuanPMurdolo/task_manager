@@ -5,6 +5,11 @@ from app.models.base import Base
 from app.models.user import User
 from app.models.task import Task
 from dotenv import load_dotenv
+from passlib.context import CryptContext
+from sqlalchemy import select
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 load_dotenv()
 
@@ -29,3 +34,23 @@ async def init_db():
 async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
+
+async def create_admin():
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(User).where(User.username == 'admin'))
+        existing = result.scalar_one_or_none()
+        if not existing:
+            hashed_password = pwd_context.hash('123456')
+            admin = User(
+                username='admin',
+                email='admin@example.com',
+                full_name='Admin User',
+                hashed_password=hashed_password,
+                is_active=True,
+                type='admin'
+            )
+            session.add(admin)
+            await session.commit()
+            print('✅ Usuario admin creado')
+        else:
+            print('ℹ️ El usuario admin ya existe')

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+from app.schemas.auth import UserResponse
 
 class TaskCreate(BaseModel):
     title: str
@@ -62,6 +63,23 @@ class TaskComment(BaseModel):
 class TaskCommentResponse(TaskComment):
     id: int
     updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+# Schema para la creación de comentarios (simple)
+class TaskCommentCreate(BaseModel):
+    content: str
+
+# Schema para la respuesta de comentarios (enriquecido)
+class TaskCommentResponse(BaseModel):
+    id: int
+    content: str
+    created_at: datetime
+    updated_at: datetime
+    task_id: int
+    # En lugar de user_id, ahora tenemos el objeto de usuario completo
+    created_by_user: UserResponse
 
     class Config:
         from_attributes = True
