@@ -52,3 +52,16 @@ class PaginationParams(BaseModel):
     skip: int = 0
     size: int = 10
     limit: Optional[int] = None
+
+class TaskComment(BaseModel):
+    task_id: int
+    user_id: int
+    content: str
+    created_at: Optional[datetime] = None
+
+class TaskCommentResponse(TaskComment):
+    id: int
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
