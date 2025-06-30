@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom"
 import { render, screen, waitFor } from "../../test-utils/test-utils"
-import { TaskFilters } from "../../components/task-filters"
+import { TaskFilters } from "../../components/tasks/task-filters"
 import { mockUsers, mockTasks, setupUser } from "../../test-utils/test-utils"
 import { jest } from "@jest/globals"
 

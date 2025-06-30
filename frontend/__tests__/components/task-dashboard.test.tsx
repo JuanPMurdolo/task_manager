@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "../../test-utils/test-utils"
 import userEvent from "@testing-library/user-event"
-import { TaskDashboard } from "../../components/task-dashboard"
+import { TaskDashboard } from "../../components/tasks/task-dashboard"
 import { mockTasks, mockUsers, mockCurrentUser, setupUser } from "../../test-utils/test-utils"
 import { jest } from "@jest/globals"
 

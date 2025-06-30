@@ -4,14 +4,10 @@
 import { render, screen, waitFor } from "../../test-utils/test-utils"
 import { LoginForm } from "../../components/auth/login-form"
 import { setupUser } from "../../test-utils/test-utils"
-import { jest } from "@jest/globals"
-
 
 // Mock fetch globally
 const mockFetch = jest.fn()
 global.fetch = mockFetch
-// Type 'Mock<UnknownFunction>' is not assignable to type '{ (input: RequestInfo | URL, init?: RequestInit | undefined): Promise<Response>; (input: string | Request | URL, init?: RequestInit | undefined): Promise<...>; }'.
-// Type 'unknown' is not assignable to type 'Promise<Response>'.
 
 describe("LoginForm", () => {
   const mockOnLogin = jest.fn()
@@ -136,7 +132,11 @@ describe("LoginForm", () => {
     await user.click(screen.getByRole("button", { name: /create account/i }))
 
     await waitFor(() => {
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i)
+      expect(confirmPasswordInput).toBeInvalid()
       expect(screen.getByText("Passwords do not match")).toBeInTheDocument()
     })
+
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 })

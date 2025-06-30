@@ -1,5 +1,5 @@
 import { render, screen, waitFor, mockTasks, mockUsers, mockCurrentUser, setupUser } from "../../test-utils/test-utils"
-import { TaskDashboard } from "../../components/task-dashboard"
+import { TaskDashboard } from "../../components/tasks/task-dashboard"
 import { jest } from "@jest/globals"
 
 // Mock fetch global

@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from "../../test-utils/test-utils"
-import { TaskList } from "../../components/task-list"
+import { TaskList } from "../../components/tasks/task-list"
 import { mockTasks, mockUsers, mockCurrentUser, setupUser } from "../../test-utils/test-utils"
 import { jest } from "@jest/globals"
 

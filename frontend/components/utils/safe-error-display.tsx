@@ -13,5 +13,9 @@ export const SafeErrorDisplay: React.FC<SafeErrorDisplayProps> = ({
 
   const errorMessage = typeof error === "string" ? error : error.msg || "An error occurred."
 
-  return <p className={className}>{errorMessage}</p>
+  return (
+    <p className={className} data-testid="error-message">
+      {errorMessage}
+    </p>
+  )
 }

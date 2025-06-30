@@ -1,7 +1,7 @@
 "use client"
 
 import { render, screen, waitFor } from "../../test-utils/test-utils"
-import { TaskForm } from "../../components/task-form"
+import { TaskForm } from "../../components/tasks/task-form"
 import { mockTasks, mockUsers, setupUser } from "../../test-utils/test-utils"
 import { jest } from "@jest/globals"
 
