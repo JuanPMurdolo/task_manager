@@ -39,14 +39,17 @@ class AuthRepository(AbstractAuthRepository):
         return result.scalar_one_or_none()
 
     async def create_user_in_db(self, user_data: UserCreate, hashed: bool = False) -> User:
-           password = user_data.password
-           print(f"Creating user with password: {password}")  # Debugging line
+           if hashed:
+               # Si se indica que la contraseña ya está hasheada, no la hasheamos de nuevo
+               user_data.password = user_data.password
+           else:
+                user_data.password = pwd_context.hash(user_data.password)
 
            new_user = User(
                username=user_data.username,
                email=user_data.email,
                full_name=user_data.full_name,
-               hashed_password=password,
+               hashed_password=user_data.password,
                is_active=True,
                type=getattr(user_data, "type", "user"),
            )
