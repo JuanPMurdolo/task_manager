@@ -1,73 +1,178 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Task Manager Frontend
 
-## Getting Started
+A modern task management application built with Next.js, TypeScript, and Tailwind CSS.
 
-First, run the development server:
+## Quick Start
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Development Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+\`\`\`bash
+# Install dependencies
+make install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Start development server
+make dev
+\`\`\`
 
-## Learn More
+The application will be available at `http://localhost:3000`
 
-To learn more about Next.js, take a look at the following resources:
+## Available Commands
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Development
+- `make dev` - Start development server
+- `make build` - Build for production
+- `make start` - Start production server
+- `make dev-setup` - Complete development environment setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Testing
+- `make test` - Run all tests
+- `make test-watch` - Run tests in watch mode
+- `make test-coverage` - Run tests with coverage report
+- `make test-unit` - Run unit tests only
+- `make test-integration` - Run integration tests only
+- `make test-ci` - Run tests for CI environment
 
-## Deploy on Vercel
+### Quality Checks
+- `make lint` - Run ESLint
+- `make lint-fix` - Run ESLint with auto-fix
+- `make type-check` - Run TypeScript type checking
+- `make check` - Run all quality checks (lint + type-check + test)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Specific Component Tests
+- `make test-login` - Test login form
+- `make test-dashboard` - Test dashboard
+- `make test-task-list` - Test task list
+- `make test-user-management` - Test user management
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Maintenance
+- `make clean` - Clean build artifacts
+- `make fresh-install` - Clean install dependencies
+- `make audit` - Run security audit
+- `make deps-check` - Check for outdated dependencies
 
----
+### Utilities
+- `make help` - Show all available commands
+- `make info` - Show project information
+- `make status` - Show project status
 
-## ⚛️ `README.md` para el **Frontend (React + Tailwind + Radix UI)**
+## Project Structure
 
-```markdown
-# Frontend - Task Management Dashboard
+\`\`\`
+├── app/                    # Next.js app directory
+├── components/            # React components
+├── __tests__/            # Test files
+│   ├── components/       # Component tests
+│   ├── integration/      # Integration tests
+│   └── test-utils/       # Test utilities
+├── lib/                  # Utility functions
+└── public/              # Static assets
+\`\`\`
 
-Este es el panel de usuario para gestionar tareas, construido con **React**, **TailwindCSS**, **Radix UI** y desplegado en **Vercel**.
+## Testing
 
-## 🧰 Requisitos
+The project uses Jest and React Testing Library for testing:
 
-- Node.js 18+
-- npm o yarn
-- Backend corriendo en `http://localhost:8000` (por defecto)
+- **Unit Tests**: Test individual components in isolation
+- **Integration Tests**: Test component interactions and workflows
+- **Coverage**: Aim for >80% test coverage
 
-## 📦 Instalación
+### Running Tests
 
-1. Clona el repositorio:
+\`\`\`bash
+# Run all tests
+make test
 
-```bash
-git clone https://github.com/tu_usuario/frontend-task-dashboard.git
-cd frontend-task-dashboard
-npm install or yarn install
-npm run dev
-```
+# Run tests in watch mode during development
+make test-watch
 
-Abre http://localhost:3000 en el navegador.
+# Run tests with coverage report
+make test-coverage
 
-🧪 Features
-* Login con JWT (guardado en localStorage)
-* Vista de tareas asignadas
-* Creación, edición y eliminación de tareas
-* Filtros rápidos por estado y prioridad
-* Vista responsive (desktop y mobile)
-* Acciones rápidas para cambiar estado
+# Run specific test file
+make test-specific FILE=__tests__/components/login-form.test.tsx
+\`\`\`
 
+## Development Workflow
+
+1. **Setup**: `make dev-setup`
+2. **Development**: `make dev`
+3. **Testing**: `make test-watch` (in another terminal)
+4. **Quality Check**: `make check` (before committing)
+5. **Build**: `make build` (before deployment)
+
+## Code Quality
+
+The project enforces code quality through:
+- **ESLint**: Code linting and style enforcement
+- **TypeScript**: Type safety and better developer experience
+- **Prettier**: Code formatting (via ESLint)
+- **Jest**: Comprehensive testing
+
+## Environment Variables
+
+Create a `.env.local` file for local development:
+
+\`\`\`env
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Other environment variables...
+\`\`\`
+
+## Deployment
+
+### Production Build
+\`\`\`bash
+make build
+make start
+\`\`\`
+
+### Docker (Optional)
+\`\`\`bash
+make docker-build
+make docker-run
+\`\`\`
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run quality checks: `make check`
+5. Submit a pull request
+
+## Troubleshooting
+
+### Common Issues
+
+**Dependencies not installing:**
+\`\`\`bash
+make clean
+make fresh-install
+\`\`\`
+
+**Tests failing:**
+\`\`\`bash
+make clean-cache
+make test
+\`\`\`
+
+**Build errors:**
+\`\`\`bash
+make type-check
+make lint
+\`\`\`
+
+### Getting Help
+
+- Run `make help` to see all available commands
+- Run `make status` to check project health
+- Run `make info` to see environment information
+
+## License
+
+This project is licensed under the MIT License.

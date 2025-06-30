@@ -87,7 +87,7 @@ class TaskService:
         return (await self.repo.enrich_tasks_with_usernames(tasks=[task]))[0]
     
     async def update_task_status(self, task_id: int, status: str, user_id: int) -> TaskResponse:
-        if status not in ["pending", "in_progress", "completed", "cancelled", "on_hold"]:
+        if status not in ["pending", "in_progress", "completed", "cancelled", "hold"]:
             raise HTTPException(status_code=400, detail="Invalid status value")
         
         task = await self.repo.update_task_status_in_db(task_id, status, user_id)
