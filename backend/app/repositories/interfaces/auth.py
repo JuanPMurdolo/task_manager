@@ -13,3 +13,5 @@ class AbstractAuthRepository(ABC):
     @abstractmethod
     def hash_password(self, plain: str) -> str:
         ...
+
+    

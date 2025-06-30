@@ -96,4 +96,10 @@ class TaskService:
         
         return (await self.repo.enrich_tasks_with_usernames(tasks=[task]))[0]
     
+    async def delete_task(self, task_id: int) -> TaskResponse:
+        task = await self.repo.delete_taslk_in_db(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        return (await self.repo.enrich_tasks_with_usernames(tasks=[task]))[0]
     

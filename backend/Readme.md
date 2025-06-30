@@ -35,4 +35,21 @@ La API estará disponible en: http://127.0.0.1:8000
 * PUT /tasks/{task_id}/status: Cambiar estado rápidamente
 * DELETE /tasks/{task_id}: Eliminar tarea
 
-swagger disponible aca http://127.0.0.1:8000/docs
+Swagger disponible en: http://127.0.0.1:8000/docs
+Redoc disponible en: http://127.0.0.1:8000/redoc
+
+
+Estructura del proyecto
+backend/
+├── app/
+│   ├── main.py
+│   ├── models/
+│   ├── routers/
+│   ├── schemas/
+│   ├── repositories/
+│   └── services/
+├── tests/
+├── requirements.txt
+├── tasks.db
+├── test.db
+└── .env

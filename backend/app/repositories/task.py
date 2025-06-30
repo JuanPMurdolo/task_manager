@@ -169,3 +169,12 @@ class TaskRepository(AbstractTaskRepository):
         await self.db.commit()
         await self.db.refresh(task)
         return task
+
+    async def delete_taslk_in_db(self, task_id: int) -> Optional[Task]:
+        task = await self.db.get(Task, task_id)
+        if not task:
+            return None
+
+        await self.db.delete(task)
+        await self.db.commit()
+        return task

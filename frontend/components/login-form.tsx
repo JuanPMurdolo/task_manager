@@ -25,13 +25,14 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     confirmPassword: "",
   })
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  // Changed to an object to hold field-specific errors
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [success, setSuccess] = useState("")
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError("")
+    setErrors({})
 
     try {
       const formData = new FormData()
@@ -50,10 +51,10 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         onLogin(data.user)
       } else {
         const errorData = await response.json()
-        setError(errorData.detail || "Login failed")
+        setErrors({ form: errorData.detail || "Login failed" })
       }
     } catch (error) {
-      setError("Network error. Please try again.")
+      setErrors({ form: "Network error. Please try again." })
     } finally {
       setIsLoading(false)
     }
@@ -62,14 +63,34 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError("")
+    setErrors({})
     setSuccess("")
 
+    // --- Client-side validation ---
+    const validationErrors: { [key: string]: string } = {}
+    if (!registerData.username) {
+      validationErrors.username = "Username is required."
+    }
+    if (!registerData.email) {
+      validationErrors.email = "Email is required."
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerData.email)) {
+      validationErrors.email = "Please enter a valid email address."
+    }
+    if (!registerData.password) {
+      validationErrors.password = "Password is required."
+    } else if (registerData.password.length < 6) {
+      validationErrors.password = "Password must be at least 6 characters."
+    }
     if (registerData.password !== registerData.confirmPassword) {
-      setError("Passwords do not match")
+      validationErrors.confirmPassword = "Passwords do not match."
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
       setIsLoading(false)
       return
     }
+    // --- End validation ---
 
     try {
       const response = await fetch("http://localhost:8000/auth/register", {
@@ -96,12 +117,42 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         })
       } else {
         const errorData = await response.json()
-        setError(errorData.detail || "Registration failed")
+        const apiErrors: { [key: string]: string } = {}
+
+        if (response.status === 422 && errorData.detail && Array.isArray(errorData.detail)) {
+          errorData.detail.forEach((err: any) => {
+            if (err.loc && err.loc.length > 1 && typeof err.msg === "string") {
+              const field = err.loc[1]
+              apiErrors[field] = err.msg
+            }
+          })
+          setErrors(apiErrors)
+        } else if (errorData.detail && typeof errorData.detail === "string") {
+          setErrors({ form: errorData.detail })
+        } else {
+          setErrors({ form: "An unknown registration error occurred." })
+        }
       }
     } catch (error) {
-      setError("Network error. Please try again.")
+      setErrors({ form: "Network error. Please try again." })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleInputChange = (form: "login" | "register", field: string, value: string) => {
+    if (form === "login") {
+      setLoginData((prev) => ({ ...prev, [field]: value }))
+    } else {
+      setRegisterData((prev) => ({ ...prev, [field]: value }))
+    }
+    // Clear error for the field that is being edited
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
     }
   }
 
@@ -135,7 +186,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               </TabsList>
 
               <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4 pt-4">
                   <div className="space-y-2">
                     <Label htmlFor="username" className="text-white">
                       Username
@@ -144,7 +195,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       id="username"
                       type="text"
                       value={loginData.username}
-                      onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
+                      onChange={(e) => handleInputChange("login", "username", e.target.value)}
                       className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                       placeholder="Enter your username"
                       required
@@ -158,7 +209,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       id="password"
                       type="password"
                       value={loginData.password}
-                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                      onChange={(e) => handleInputChange("login", "password", e.target.value)}
                       className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                       placeholder="Enter your password"
                       required
@@ -175,7 +226,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               </TabsContent>
 
               <TabsContent value="register">
-                <form onSubmit={handleRegister} className="space-y-4">
+                <form onSubmit={handleRegister} className="space-y-4 pt-4">
                   <div className="space-y-2">
                     <Label htmlFor="reg-username" className="text-white">
                       Username
@@ -184,11 +235,14 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       id="reg-username"
                       type="text"
                       value={registerData.username}
-                      onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                      onChange={(e) => handleInputChange("register", "username", e.target.value)}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 ${
+                        errors.username ? "border-red-500" : ""
+                      }`}
                       placeholder="Choose a username"
                       required
                     />
+                    {errors.username && <p className="text-sm text-red-400 mt-1">{errors.username}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-white">
@@ -198,11 +252,14 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       id="email"
                       type="email"
                       value={registerData.email}
-                      onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                      onChange={(e) => handleInputChange("register", "email", e.target.value)}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 ${
+                        errors.email ? "border-red-500" : ""
+                      }`}
                       placeholder="Enter your email"
                       required
                     />
+                    {errors.email && <p className="text-sm text-red-400 mt-1">{errors.email}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="full-name" className="text-white">
@@ -212,7 +269,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       id="full-name"
                       type="text"
                       value={registerData.full_name}
-                      onChange={(e) => setRegisterData({ ...registerData, full_name: e.target.value })}
+                      onChange={(e) => handleInputChange("register", "full_name", e.target.value)}
                       className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                       placeholder="Enter your full name"
                     />
@@ -225,11 +282,14 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       id="reg-password"
                       type="password"
                       value={registerData.password}
-                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                      onChange={(e) => handleInputChange("register", "password", e.target.value)}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 ${
+                        errors.password ? "border-red-500" : ""
+                      }`}
                       placeholder="Create a password"
                       required
                     />
+                    {errors.password && <p className="text-sm text-red-400 mt-1">{errors.password}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password" className="text-white">
@@ -239,11 +299,14 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       id="confirm-password"
                       type="password"
                       value={registerData.confirmPassword}
-                      onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                      onChange={(e) => handleInputChange("register", "confirmPassword", e.target.value)}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 ${
+                        errors.confirmPassword ? "border-red-500" : ""
+                      }`}
                       placeholder="Confirm your password"
                       required
                     />
+                    {errors.confirmPassword && <p className="text-sm text-red-400 mt-1">{errors.confirmPassword}</p>}
                   </div>
                   <Button
                     type="submit"
@@ -256,10 +319,10 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               </TabsContent>
             </Tabs>
 
-            {error && (
+            {errors.form && (
               <Alert className="mt-4 border-red-500/30 bg-red-500/10">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-red-400">{error}</AlertDescription>
+                <AlertDescription className="text-red-400">{errors.form}</AlertDescription>
               </Alert>
             )}
 

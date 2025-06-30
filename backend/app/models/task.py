@@ -13,7 +13,6 @@ class Task(Base):
     created_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, nullable=True)
     due_date = Column(DateTime, nullable=True)
-    comments = Column(String, nullable=True)
 
     created_by = Column(Integer, ForeignKey("users.id"))
     updated_by = Column(Integer, ForeignKey("users.id"))

@@ -25,7 +25,7 @@ help: ## Show this help message
 
 # Environment Setup
 .PHONY: setup
-setup: ## Set up the development environment
+setup: ## Crea el entorno virtual e instala dependencias
 	@echo "$(YELLOW)Setting up development environment...$(NC)"
 	$(PYTHON) -m venv $(VENV_NAME)
 	$(VENV_ACTIVATE) && $(PIP) install --upgrade pip
@@ -33,22 +33,10 @@ setup: ## Set up the development environment
 	@echo "$(GREEN)✓ Development environment ready!$(NC)"
 
 .PHONY: install
-install: ## Install dependencies
+install: ##Instala dependencias
 	@echo "$(YELLOW)Installing dependencies...$(NC)"
 	$(PIP) install -r $(REQUIREMENTS)
 	@echo "$(GREEN)✓ Dependencies installed!$(NC)"
-
-.PHONY: install-dev
-install-dev: ## Install development dependencies
-	@echo "$(YELLOW)Installing development dependencies...$(NC)"
-	$(PIP) install -r requirements-dev.txt
-	@echo "$(GREEN)✓ Development dependencies installed!$(NC)"
-
-.PHONY: freeze
-freeze: ## Freeze current dependencies
-	@echo "$(YELLOW)Freezing dependencies...$(NC)"
-	$(PIP) freeze > $(REQUIREMENTS)
-	@echo "$(GREEN)✓ Dependencies frozen to $(REQUIREMENTS)$(NC)"
 
 # Development
 .PHONY: dev
