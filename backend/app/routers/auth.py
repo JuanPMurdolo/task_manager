@@ -78,3 +78,34 @@ async def admin_create_user(
 
     user = await auth_service.admin_create_user(user_data)
     return UserResponse.from_orm(user)
+
+@router.delete("/users/{user_id}", response_model=UserResponse)
+async def admin_delete_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    if current_user.type != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can delete users")
+    user = await auth_service.admin_delete_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return UserResponse.from_orm(user)
+
+@router.put("/users/{user_id}", response_model=UserResponse)
+async def admin_update_user(
+    user_id: int,
+    user_data: UserCreate,
+    current_user: User = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    if current_user.type != "admin" and current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="Only admins can update users")
+
+    user = await auth_service.get_user_by_username(user_data.username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_data.password = pwd_context.hash(user_data.password)
+    updated_user = await auth_service.update_user(user_id, user_data)
+    return UserResponse.from_orm(updated_user)

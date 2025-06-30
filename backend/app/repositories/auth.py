@@ -58,3 +58,30 @@ class AuthRepository(AbstractAuthRepository):
     async def get_all_users_in_db(self):
         result = await self.db.execute(select(User))
         return result.scalars().all()
+
+    async def delete_user_in_db(self, user_id: int):
+        user = await self.db.get(User, user_id)
+        if not user:
+            return None
+
+        await self.db.delete(user)
+        await self.db.commit()
+        return user
+
+    async def update_user_in_db(self, user_id: int, user_data):
+        user = await self.db.get(User, user_id)
+        if not user:
+            return None
+
+        if user_data.username is not None:
+            user.username = user_data.username
+        if user_data.email is not None:
+            user.email = user_data.email
+        if user_data.full_name is not None:
+            user.full_name = user_data.full_name
+        if user_data.password is not None:
+            user.hashed_password = pwd_context.hash(user_data.password)
+        
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
