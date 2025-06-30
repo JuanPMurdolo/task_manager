@@ -14,6 +14,7 @@ from app.core.auth import get_current_user
 from app.repositories.task import TaskRepository
 from app.repositories.interfaces.task import AbstractTaskRepository
 from app.services.task import TaskService
+from app.dependencies.task import get_task_service
 
 router = APIRouter()
 
@@ -21,7 +22,7 @@ router = APIRouter()
 @router.post("/tasks", response_model=TaskResponse)
 async def create_task(
     task_data: TaskCreate,
-    db: AsyncSession = Depends(get_db),
+    service: TaskService = Depends(get_task_service),
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -35,7 +36,6 @@ async def create_task(
     Raises:
         HTTPException: If the task creation fails or if the user is not authenticated.
     """
-    service = TaskService(db)
     new_task = await service.create_task(task_data, current_user.id)
     return new_task
 
@@ -43,7 +43,7 @@ async def create_task(
 async def update_task(
     task_id: int,
     task_update: TaskUpdate,
-    db: AsyncSession = Depends(get_db),
+    service: TaskService = Depends(get_task_service),
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -58,7 +58,6 @@ async def update_task(
     Raises:
         HTTPException: If the task is not found or if the update fails.
     """
-    service = TaskService(db)
     task = await service.update_task(task_id, task_update, current_user.id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -67,7 +66,7 @@ async def update_task(
 @router.post("/tasks/bulk_update", response_model=List[TaskResponse])
 async def bulk_update_tasks(
     task_update: TaskBulkUpdate,
-    db: AsyncSession = Depends(get_db),
+    service: TaskService = Depends(get_task_service),
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -81,7 +80,6 @@ async def bulk_update_tasks(
     Raises:
         HTTPException: If no task IDs are provided or if no tasks are found.
     """
-    service = TaskService(db)
     if not task_update.task_ids:
         raise HTTPException(status_code=400, detail="No task IDs provided")
     tasks = await service.bulk_update_tasks(task_update.task_ids, task_update, current_user.id)
@@ -92,7 +90,7 @@ async def bulk_update_tasks(
 @router.get("/tasks", response_model=List[TaskResponse])
 async def list_tasks(
     pagination: PaginationParams = Depends(),
-    db: AsyncSession = Depends(get_db)
+    service: TaskService = Depends(get_task_service)
 ):
     """
     List all tasks with pagination support.
@@ -101,7 +99,6 @@ async def list_tasks(
         pagination (PaginationParams): Pagination parameters for the request.
         db (AsyncSession): Database session dependency.
     """
-    service = TaskService(db)
     tasks = await service.list_tasks(pagination=pagination)
     if not tasks:
         raise HTTPException(status_code=404, detail="No tasks found")
@@ -111,7 +108,7 @@ async def list_tasks(
 @router.get("/tasks/created", response_model=List[TaskResponse])
 async def get_created_tasks(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    service: TaskService = Depends(get_task_service)
 ):
     """
     Get tasks created by the current user.
@@ -123,14 +120,14 @@ async def get_created_tasks(
     Raises:
         HTTPException: If no tasks are found for the user.
     """
-    service = TaskService(db)
+    service: TaskService = Depends(get_task_service),
     tasks = await service.get_tasks_created_by_user(current_user.id)
     return tasks
 
 @router.get("/tasks/updated", response_model=List[TaskResponse])
 async def get_updated_tasks(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    service: TaskService = Depends(get_task_service)
 ):
     """
     Get tasks updated by the current user.
@@ -142,14 +139,13 @@ async def get_updated_tasks(
     Raises:
         HTTPException: If no tasks are found for the user.
     """
-    service = TaskService(db)
     tasks = await service.get_tasks_updated_by_user(current_user.id)
     return tasks
 
 @router.get("/tasks/assigned", response_model=List[TaskResponse])
 async def get_assigned_tasks(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    service: TaskService = Depends(get_task_service)
 ):
     """
     Get tasks assigned to the current user.
@@ -161,13 +157,12 @@ async def get_assigned_tasks(
     Raises:
         HTTPException: If no tasks are found for the user.
     """
-    service = TaskRepository(db)
     tasks = await service.get_tasks_assigned_to_user(current_user.id)
     return tasks
 
 @router.get("/tasks/overdue", response_model=List[TaskResponse])
 async def get_overdue_tasks_endpoint(
-    db: AsyncSession = Depends(get_db)
+    service: TaskService = Depends(get_task_service)
 ):
     """
     Get all overdue tasks.
@@ -179,14 +174,13 @@ async def get_overdue_tasks_endpoint(
     Raises:
         HTTPException: If no overdue tasks are found.
     """
-    service = TaskService(db)
     tasks = await service.get_overdue_tasks()
     return tasks
 
 @router.get("/tasks/search", response_model=List[TaskResponse])
 async def search_tasks(
     query: str,
-    db: AsyncSession = Depends(get_db),
+    service: TaskService = Depends(get_task_service),
     pagination: PaginationParams = Depends()
 ):
     """
@@ -200,7 +194,6 @@ async def search_tasks(
     Raises:
         HTTPException: If the search query is empty or if no tasks are found.
     """
-    service = TaskService(db)
     if not query:
         raise HTTPException(status_code=400, detail="Search query cannot be empty")
     tasks = await service.search_tasks_by_title(query, pagination.skip, pagination.limit)
@@ -209,7 +202,7 @@ async def search_tasks(
 @router.get("/tasks/created_by/{user_id}", response_model=List[TaskResponse])
 async def get_tasks_created_by_user_route(
     user_id: int,
-    db: AsyncSession = Depends(get_db)
+    service: TaskService = Depends(get_task_service)
 ):
     """Get tasks created by a specific user.
     Args:
@@ -220,14 +213,13 @@ async def get_tasks_created_by_user_route(
     Raises:
         HTTPException: If no tasks are found for the user.
     """
-    service = TaskService(db)
     tasks = await service.get_tasks_created_by_user(user_id)
     return tasks
 
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
 async def get_task(
     task_id: int,
-    db: AsyncSession = Depends(get_db)
+    service: TaskService = Depends(get_task_service)
 ):
     """
     Get a task by its ID.
@@ -239,7 +231,6 @@ async def get_task(
     Raises:
         HTTPException: If the task is not found.
     """
-    service = TaskService(db)
     task = await service.get_task_by_id(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -249,7 +240,7 @@ async def get_task(
 async def update_task_status(
     task_id: int,
     status: str,
-    db: AsyncSession = Depends(get_db),
+    service: TaskService = Depends(get_task_service),
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -264,7 +255,6 @@ async def update_task_status(
     Raises:
         HTTPException: If the task is not found or if the status update fails.
     """
-    service = TaskService(db)
     try:
         task = await service.update_task_status(task_id, status, current_user.id)
     except ValueError as e:

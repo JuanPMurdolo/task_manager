@@ -15,9 +15,8 @@ from app.repositories.task import TaskRepository
 from app.repositories.interfaces.task import AbstractTaskRepository
 
 class TaskService:
-    def __init__(self, db: AsyncSession):
-        self.db = db
-        self.repo = TaskRepository(db)
+    def __init__(self, repo):
+        self.repo = repo
 
     async def create_task(self, task_data: TaskCreate, user_id: int) -> TaskResponse:
         new_task = await self.repo.create_task_in_db(task_data, user_id)
