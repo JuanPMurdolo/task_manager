@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,10 +22,17 @@ interface Task {
   assigned_to: string | null
 }
 
+interface User {
+  id: number
+  username: string
+  full_name: string
+  type: "admin" | "user"
+}
+
 interface TaskDetailModalProps {
   task: Task
-  users: any[]
-  currentUser: any | null
+  users: User[]
+  currentUser: User | null
   onClose: () => void
   onEditTask: (task: Task) => void
   onTaskUpdated: (task: Task) => void
@@ -40,6 +48,10 @@ export function TaskDetailModal({
   onTaskUpdated,
   onTaskDeleted,
 }: TaskDetailModalProps) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  const canModify = currentUser && (currentUser.username === task.created_by || currentUser.type === "admin")
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
@@ -119,126 +131,134 @@ export function TaskDetailModal({
   const createdByUser = getAssignedUser(task.created_by)
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== "completed"
 
+  const handleDelete = () => {
+    onTaskDeleted(task.id)
+    onClose()
+  }
+
   return (
-    <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-      onClick={onClose}
-    >
-      <Card
-        className="card-gradient border-white/10 w-full max-w-4xl max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+    <>
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+        onClick={onClose}
       >
-        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4 border-b border-white/10">
-          <div>
-            <CardTitle className="text-white text-2xl">{task.title}</CardTitle>
-            <div className="flex items-center space-x-4 mt-2">
-              <Badge className={getStatusColor(task.status)}>
-                {getStatusIcon(task.status)}
-                <span className="ml-2 capitalize">{task.status.replace("_", " ")}</span>
-              </Badge>
-              <Badge className={getPriorityColor(task.priority)}>
-                <span className="capitalize">{task.priority} Priority</span>
-              </Badge>
-              {isOverdue && (
-                <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  Overdue
+        <Card
+          className="card-gradient border-white/10 w-full max-w-4xl max-h-[90vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4 border-b border-white/10">
+            <div>
+              <CardTitle className="text-white text-2xl">{task.title}</CardTitle>
+              <div className="flex items-center space-x-4 mt-2">
+                <Badge className={getStatusColor(task.status)}>
+                  {getStatusIcon(task.status)}
+                  <span className="ml-2 capitalize">{task.status.replace("_", " ")}</span>
                 </Badge>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEditTask(task)}
-              className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-white/10"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                onTaskDeleted(task.id)
-                onClose()
-              }}
-              className="h-8 w-8 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-white/10"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="flex-grow overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-6">
-            <div>
-              <h4 className="font-semibold text-gray-300 mb-2">Description</h4>
-              <p className="text-gray-400 whitespace-pre-wrap">{task.description || "No description provided."}</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-300 mb-2">Comments</h4>
-              <TaskComments taskId={task.id} currentUser={currentUser} users={users} />
-            </div>
-          </div>
-          <div className="md:col-span-1 space-y-4">
-            <Card className="card-gradient border-white/10 p-4">
-              <h4 className="font-semibold text-gray-300 mb-3">Details</h4>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Assignee</span>
-                  {assignedUser ? (
-                    <div className="flex items-center space-x-2 text-white">
-                      <Avatar className="h-5 w-5">
-                        <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                          {getInitials(assignedUser.full_name, assignedUser.username)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{assignedUser.full_name || assignedUser.username}</span>
-                    </div>
-                  ) : (
-                    <span className="text-gray-500">Unassigned</span>
-                  )}
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Due Date</span>
-                  <span className={`text-white ${isOverdue ? "text-red-400" : ""}`}>{formatDate(task.due_date)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Created By</span>
-                  {createdByUser ? (
-                    <div className="flex items-center space-x-2 text-white">
-                      <Avatar className="h-5 w-5">
-                        <AvatarFallback className="bg-gray-700 text-gray-300 text-xs">
-                          {getInitials(createdByUser.full_name, createdByUser.username)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{createdByUser.full_name || createdByUser.username}</span>
-                    </div>
-                  ) : (
-                    <span className="text-gray-500">{task.created_by}</span>
-                  )}
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Created At</span>
-                  <span className="text-white">{formatDate(task.created_at)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Last Updated</span>
-                  <span className="text-white">{formatDate(task.updated_at)}</span>
-                </div>
+                <Badge className={getPriorityColor(task.priority)}>
+                  <span className="capitalize">{task.priority} Priority</span>
+                </Badge>
+                {isOverdue && (
+                  <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    Overdue
+                  </Badge>
+                )}
               </div>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {canModify && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEditTask(task)}
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-white/10"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-white/10"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-grow overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 space-y-6">
+              <div>
+                <h4 className="font-semibold text-gray-300 mb-2">Description</h4>
+                <p className="text-gray-400 whitespace-pre-wrap">{task.description || "No description provided."}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-300 mb-2">Comments</h4>
+                <TaskComments taskId={task.id} currentUser={currentUser} users={users} />
+              </div>
+            </div>
+            <div className="md:col-span-1 space-y-4">
+              <Card className="card-gradient border-white/10 p-4">
+                <h4 className="font-semibold text-gray-300 mb-3">Details</h4>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Assignee</span>
+                    {assignedUser ? (
+                      <div className="flex items-center space-x-2 text-white">
+                        <Avatar className="h-5 w-5">
+                          <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                            {getInitials(assignedUser.full_name, assignedUser.username)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{assignedUser.full_name || assignedUser.username}</span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500">Unassigned</span>
+                    )}
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Due Date</span>
+                    <span className={`text-white ${isOverdue ? "text-red-400" : ""}`}>{formatDate(task.due_date)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Created By</span>
+                    {createdByUser ? (
+                      <div className="flex items-center space-x-2 text-white">
+                        <Avatar className="h-5 w-5">
+                          <AvatarFallback className="bg-gray-700 text-gray-300 text-xs">
+                            {getInitials(createdByUser.full_name, createdByUser.username)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{createdByUser.full_name || createdByUser.username}</span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500">{task.created_by}</span>
+                    )}
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Created At</span>
+                    <span className="text-white">{formatDate(task.created_at)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Last Updated</span>
+                    <span className="text-white">{formatDate(task.updated_at)}</span>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   )
 }

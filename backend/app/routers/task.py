@@ -266,7 +266,8 @@ async def update_task_status(
 @router.delete("/tasks/{task_id}", response_model=TaskResponse)
 async def delete_task(
     task_id: int,
-    service: TaskService = Depends(get_task_service)
+    service: TaskService = Depends(get_task_service),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Delete a task by its ID.
@@ -278,6 +279,9 @@ async def delete_task(
     Raises:
         HTTPException: If the task is not found or if the deletion fails.
     """
+    task = await service.get_task_by_id(task_id)
+    if task.created_by != current_user.username and current_user.type != "admin":
+        raise HTTPException(status_code=403, detail="You do not have permission to delete this task")
     task = await service.delete_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")

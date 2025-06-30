@@ -68,7 +68,7 @@ export function TaskList({
   }
 
   const handleDeleteTask = async (taskId: number) => {
-    if (!confirm("Are you sure you want to delete this task?")) {
+    if (!confirm("Are you sure you want to delete this task? This action cannot be undone.")) {
       return
     }
 
@@ -84,6 +84,10 @@ export function TaskList({
 
       if (response.ok) {
         onTaskDeleted(taskId)
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to delete task: ${errorData.detail || "Unknown error"}`)
+        console.error("Error deleting task:", errorData)
       }
     } catch (error) {
       console.error("Failed to delete task:", error)
@@ -133,9 +137,9 @@ export function TaskList({
       case "pending":
         return <AlertCircle className="h-3 w-3" />
       case "hold":
-        return <Clock className="h-3 w-3" /> // o PauseCircle si usás otro ícono
+        return <Clock className="h-3 w-3" />
       case "cancelled":
-        return <AlertCircle className="h-3 w-3" /> // o XCircle si tenés instalado
+        return <AlertCircle className="h-3 w-3" />
       default:
         return <AlertCircle className="h-3 w-3" />
     }
@@ -185,6 +189,7 @@ export function TaskList({
       {tasks.map((task) => {
         const assignedUser = getAssignedUser(task.assigned_to)
         const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== "completed"
+        const canModify = currentUser && (currentUser.type === "admin" || currentUser.username === task.created_by)
 
         return (
           <Card
@@ -199,29 +204,33 @@ export function TaskList({
                   <p className="text-gray-400 text-sm line-clamp-2">{task.description}</p>
                 </div>
                 <div className="flex items-center space-x-2 ml-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onEditTask(task)
-                    }}
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-white/10"
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeleteTask(task.id)
-                    }}
-                    disabled={isLoading}
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  {canModify && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEditTask(task)
+                        }}
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-white/10"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteTask(task.id)
+                        }}
+                        disabled={isLoading}
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </CardHeader>

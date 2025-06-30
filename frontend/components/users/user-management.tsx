@@ -14,7 +14,7 @@ interface User {
   username: string
   email: string
   full_name: string
-  type: string
+  type: "admin" | "user" 
   is_active?: boolean
 }
 

@@ -12,13 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LogOut, Plus, CheckSquare, Clock, AlertCircle, Users, Shield, UserPlus } from "lucide-react"
 import { TaskDetailModal } from "@/components/tasks/task-detail-modal"
 
-interface User {
-  id: number
-  username: string
-  email: string
-  full_name: string
-  type: string
-}
 
 interface Task {
   id: number
@@ -32,6 +25,14 @@ interface Task {
   created_by: string
   updated_by: string
   assigned_to: string | null
+}
+
+interface User {
+  id: number
+  username: string
+  email: string
+  full_name: string
+  type: "admin" | "user"
 }
 
 interface TaskDashboardProps {

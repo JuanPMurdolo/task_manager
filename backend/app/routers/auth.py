@@ -73,6 +73,7 @@ async def admin_create_user(
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    user_data.password = pwd_context.hash(user_data.password)
     if current_user.type != "admin":
         raise HTTPException(status_code=403, detail="Only admins can create users")
 
