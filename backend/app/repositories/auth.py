@@ -22,8 +22,8 @@ class AuthRepository(AbstractAuthRepository):
     async def create_user(self, user_data, hashed: bool = False) -> User:
         return await self.create_user_in_db(user_data, hashed)
     
-    async def hash_password(self, plain):
-        return super().hash_password(plain)
+    def hash_password(self, plain: str) -> str:
+        return pwd_context.hash(plain)
     
     def verify_password(self, plain: str, hashed: str) -> bool:
         return pwd_context.verify(plain, hashed)
@@ -32,8 +32,8 @@ class AuthRepository(AbstractAuthRepository):
         result = await self.db.execute(select(User).where(User.username == username))
         return result.scalar_one_or_none()
 
-    async def get_user_by_email_in_db(db, email: str):
-        result = await db.execute(select(User).where(User.email == email))
+    async def get_user_by_email_in_db(self, email: str):
+        result = await self.db.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
     async def create_user_in_db(self, user_data, hashed: bool = False):

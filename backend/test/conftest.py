@@ -1,70 +1,97 @@
 import pytest
-from httpx import AsyncClient
+import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from app.main import app
-from app.core.database import Base, get_db
-from app.models.user import User
-from app.core.auth import create_access_token
-from passlib.context import CryptContext
 from datetime import datetime
+import uuid
 
-DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-engine_test = create_async_engine(DATABASE_URL, echo=False)
-TestingSessionLocal = sessionmaker(bind=engine_test, class_=AsyncSession, expire_on_commit=False)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from app.core.database import Base
+from app.models.user import User
+from app.models.task import Task
 
+# Test database URL (in-memory SQLite)
+TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-# Override DB
-async def override_get_db():
-    async with TestingSessionLocal() as session:
-        yield session
-
-
-@pytest.fixture(scope="module")
-async def test_client():
-    # Crear tablas
-    async with engine_test.begin() as conn:
+@pytest_asyncio.fixture(scope="function")
+async def test_engine():
+    """Create a test database engine."""
+    engine = create_async_engine(
+        TEST_DATABASE_URL,
+        echo=False,
+        future=True
+    )
+    
+    # Create all tables
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    
+    yield engine
+    
+    # Clean up
+    await engine.dispose()
 
-    app.dependency_overrides[get_db] = override_get_db
-
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client
-
-
-@pytest.fixture
-async def db_session():
-    async with TestingSessionLocal() as session:
+@pytest_asyncio.fixture(scope="function")
+async def db_session(test_engine):
+    """Create a database session for testing."""
+    async_session = sessionmaker(
+        test_engine, class_=AsyncSession, expire_on_commit=False
+    )
+    
+    async with async_session() as session:
         yield session
 
-
-# Fixture para crear un usuario en la base de datos
-@pytest.fixture
-async def create_test_user(db_session: AsyncSession):
-    async def _create_user(username: str, password: str, user_type: str = "user"):
-        hashed_pw = pwd_context.hash(password)
+@pytest_asyncio.fixture(scope="function")
+async def create_test_user(db_session):
+    """Factory fixture to create test users."""
+    created_users = []
+    
+    async def _create_user(username: str, password: str, email: str = None):
+        # Generate unique identifiers to avoid conflicts
+        unique_id = str(uuid.uuid4())[:8]
+        unique_username = f"{username}"
+        unique_email = email or f"{username}@test.com"
+        
+        from passlib.context import CryptContext
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        hashed_password = pwd_context.hash(password)
+        
         user = User(
-            username=username,
-            email=f"{username}@test.com",
-            full_name=f"{username.capitalize()} Tester",
-            hashed_password=hashed_pw,
+            username=unique_username,
+            email=unique_email,
+            full_name=f"Test {username.title()}",
+            hashed_password=hashed_password,
             is_active=True,
-            type=user_type,
+            type="user",
             created_at=datetime.utcnow()
         )
+        
         db_session.add(user)
         await db_session.commit()
         await db_session.refresh(user)
+        
+        created_users.append(user)
         return user
-    return _create_user
+    
+    yield _create_user
+    
+    # Cleanup created users
+    for user in created_users:
+        try:
+            await db_session.delete(user)
+            await db_session.commit()
+        except:
+            pass  # User might already be deleted
 
+@pytest_asyncio.fixture(scope="function")
+async def test_user(create_test_user):
+    """Create a single test user."""
+    return await create_test_user("testuser", "testpassword123")
 
-# Fixture para obtener headers JWT válidos
-@pytest.fixture
-async def get_token_headers(create_test_user):
-    async def _get_headers(username: str, password: str = "test123"):
-        user = await create_test_user(username=username, password=password)
-        token = create_access_token(data={"sub": user.username})
-        return {"Authorization": f"Bearer {token}"}
-    return _get_headers
+@pytest_asyncio.fixture(scope="function")
+async def test_users(create_test_user):
+    """Create multiple test users."""
+    users = []
+    for i in range(3):
+        user = await create_test_user(f"user{i+1}", f"password{i+1}")
+        users.append(user)
+    return users

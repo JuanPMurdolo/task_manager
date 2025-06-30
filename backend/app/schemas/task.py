@@ -16,7 +16,7 @@ class TaskResponse(BaseModel):
     description: Optional[str]
     status: str
     priority: str  # e.g., low, medium, high, urgent
-    due_date: Optional[datetime]
+    due_date: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
     created_by: str  # Username of the creator
@@ -28,11 +28,11 @@ class TaskResponse(BaseModel):
         from_attributes = True
         
 class TaskUpdate(BaseModel):
-    title: Optional[str]
-    description: Optional[str]
-    status: Optional[str]
-    priority: Optional[str]
-    due_date: Optional[datetime]
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = "pending"
+    priority: Optional[str] = "low"  # e.g., low, medium, high, urgent
+    due_date: Optional[datetime] = None
     assigned_to: Optional[int] = None
     updated_by: Optional[int] = None
 
