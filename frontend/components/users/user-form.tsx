@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { X, Shield, Eye, EyeOff, Mail, AlertCircle } from "lucide-react"
-import { SafeErrorDisplay } from "@/components/safe-error-display"
+import { SafeErrorDisplay } from "@/utils/safe-error-display"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface User {

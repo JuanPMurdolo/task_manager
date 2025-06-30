@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { LoginForm } from "@/components/login-form"
-import { TaskDashboard } from "@/components/task-dashboard"
+import { LoginForm } from "@/components/auth/login-form"
+import { TaskDashboard } from "@/components/tasks/task-dashboard"
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)

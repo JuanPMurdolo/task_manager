@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { X, Edit, Trash2, CheckCircle2, Clock, AlertCircle } from "lucide-react"
-import { TaskComments } from "@/components/task-comments"
+import { TaskComments } from "@/components/tasks/task-comments"
 
 interface Task {
   id: number

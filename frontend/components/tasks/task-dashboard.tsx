@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TaskList } from "@/components/task-list"
-import { TaskFilters } from "@/components/task-filters"
-import { TaskForm } from "@/components/task-form"
-import { UserManagement } from "@/components/user-management"
+import { TaskList } from "@/components/tasks/task-list"
+import { TaskFilters } from "@/components/tasks/task-filters"
+import { TaskForm } from "@/components/tasks/task-form"
+import { UserManagement } from "@/components/users/user-management"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LogOut, Plus, CheckSquare, Clock, AlertCircle, Users, Shield, UserPlus } from "lucide-react"
-import { TaskDetailModal } from "@/components/task-detail-modal"
+import { TaskDetailModal } from "@/components/tasks/task-detail-modal"
 
 interface User {
   id: number

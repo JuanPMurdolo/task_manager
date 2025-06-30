@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from "../../test-utils/test-utils"
-import { UserManagement } from "../../components/user-management"
+import { UserManagement } from "../../components/users/user-management"
 import { mockUsers, mockCurrentUser, setupUser } from "../../test-utils/test-utils"
 import { jest } from "@jest/globals"
 

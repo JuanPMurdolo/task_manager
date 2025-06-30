@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { render, screen, waitFor } from "../../test-utils/test-utils"
-import { LoginForm } from "../../components/login-form"
+import { LoginForm } from "../../components/auth/login-form"
 import { setupUser } from "../../test-utils/test-utils"
 import { jest } from "@jest/globals"
 

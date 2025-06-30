@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { UserForm } from "@/components/user-form"
+import { UserForm } from "@/components/users/user-form"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { UserPlus, Edit, Trash2, Shield, Mail, AlertCircle, CheckCircle } from 'lucide-react'
 
