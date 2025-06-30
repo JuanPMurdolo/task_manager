@@ -6,6 +6,7 @@ from fastapi import Depends
 from app.core.database import get_db
 
 from app.models.user import User
+from app.schemas.auth import UserCreate
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -37,23 +38,23 @@ class AuthRepository(AbstractAuthRepository):
         result = await self.db.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
-    async def create_user_in_db(self, user_data, hashed: bool = False):
-        password = user_data.password
-        hashed_password = password if hashed else pwd_context.hash(password)
+    async def create_user_in_db(self, user_data: UserCreate, hashed: bool = False) -> User:
+           password = user_data.password
+           print(f"Creating user with password: {password}")  # Debugging line
 
-        new_user = User(
-            username=user_data.username,
-            email=user_data.email,
-            full_name=user_data.full_name,
-            hashed_password=hashed_password,
-            is_active=True,
-            type=getattr(user_data, "type", "user"),
-        )
+           new_user = User(
+               username=user_data.username,
+               email=user_data.email,
+               full_name=user_data.full_name,
+               hashed_password=password,
+               is_active=True,
+               type=getattr(user_data, "type", "user"),
+           )
 
-        self.db.add(new_user)
-        await self.db.commit()
-        await self.db.refresh(new_user)
-        return new_user
+           self.db.add(new_user)
+           await self.db.commit()
+           await self.db.refresh(new_user)
+           return new_user
 
     async def get_all_users_in_db(self):
         result = await self.db.execute(select(User))
