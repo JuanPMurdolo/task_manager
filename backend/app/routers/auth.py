@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 
 from app.models.user import User
 from app.core.database import get_db
-from app.schemas.auth import LoginResponse, LoginRequest, UserResponse, UserCreate
+from app.schemas.auth import LoginResponse, LoginRequest, UserResponse, UserCreate, UserUpdate
 from app.core.auth import authenticate_user, create_access_token, get_current_user
 from app.services.auth import AuthService
 
@@ -95,17 +95,27 @@ async def admin_delete_user(
 @router.put("/users/{user_id}", response_model=UserResponse)
 async def admin_update_user(
     user_id: int,
-    user_data: UserCreate,
+    user_data: UserUpdate, # 2. Usa el nuevo schema UserUpdate
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service)
 ):
     if current_user.type != "admin" and current_user.id != user_id:
         raise HTTPException(status_code=403, detail="Only admins can update users")
 
-    user = await auth_service.get_user_by_username(user_data.username)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # 3. Obtén los datos que realmente se enviaron, omitiendo los que no (los que son None)
+    update_data = user_data.dict(exclude_unset=True)
 
-    user_data.password = pwd_context.hash(user_data.password)
-    updated_user = await auth_service.update_user(user_id, user_data)
+    # 4. Si se envió una nueva contraseña Y no está vacía, hasheala.
+    if "password" in update_data and update_data["password"]:
+        update_data["password"] = pwd_context.hash(update_data["password"])
+    # Si se envió el campo "password" pero está vacío, elimínalo para no actualizarlo.
+    elif "password" in update_data:
+        del update_data["password"]
+
+    # 5. Llama al servicio con solo los datos que necesitan ser actualizados.
+    updated_user = await auth_service.update_user(user_id, update_data)
+    
+    if not updated_user:
+        raise HTTPException(status_code=404, detail="User not found or update failed")
+
     return UserResponse.from_orm(updated_user)

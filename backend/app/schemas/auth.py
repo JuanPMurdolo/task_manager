@@ -39,3 +39,11 @@ class LoginResponse(BaseModel):
 class UserCreateWithType(UserCreate):
     type: Optional[str] = "user"
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+    password: Optional[str] = None
+    is_active: Optional[bool] = None
+    type: Optional[str] = None  # e.g., "admin", "user"
+

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Shield, Eye, EyeOff, Mail, AlertCircle } from "lucide-react"
+import { X, Shield, Eye, EyeOff, Mail, AlertCircle, UserIcon } from "lucide-react"
 import { SafeErrorDisplay } from "@/components/utils/safe-error-display"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
@@ -70,7 +70,6 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
 
   const validate = () => {
     const validationErrors: { [key: string]: string } = {}
-
     if (!formData.username.trim()) {
       validationErrors.username = "Username is required."
     }
@@ -80,7 +79,7 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
 
     // Password validation logic
     if (!user) {
-      // Case 1: Creating a new user
+      // Case 1: Creating a new user (password is required)
       if (!formData.password) {
         validationErrors.password = "Password is required."
       } else if (formData.password.length < 6) {
@@ -89,7 +88,15 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
       if (formData.password !== formData.confirmPassword) {
         validationErrors.confirmPassword = "Passwords do not match."
       }
-    } 
+    } else if (formData.password) {
+      // Case 2: Editing a user AND a new password is provided
+      if (formData.password.length < 6) {
+        validationErrors.password = "Password must be at least 6 characters."
+      }
+      if (formData.password !== formData.confirmPassword) {
+        validationErrors.confirmPassword = "Passwords do not match."
+      }
+    }
 
     setErrors(validationErrors)
     return Object.keys(validationErrors).length === 0
@@ -98,11 +105,9 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormError(null)
-
     if (!validate()) {
       return
     }
-
     setIsLoading(true)
 
     try {
@@ -116,8 +121,15 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
         full_name: formData.full_name,
         type: formData.type,
       }
-      // Only include password if it's a new user or if a new password has been entered for an existing user
-      if (!user || formData.password) {
+
+      // Only include the password field if creating a new user,
+      // or if a new password is provided when editing.
+      // If editing and the password field is empty, we omit it entirely.
+      if (!user) {
+        // Creating a new user
+        requestBody.password = formData.password
+      } else if (formData.password) {
+        // Editing an existing user and a new password is provided
         requestBody.password = formData.password
       }
 
@@ -139,7 +151,7 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
           responseData.detail.forEach((err: any) => {
             if (err.loc && err.loc.length > 1) {
               const field = err.loc[err.loc.length - 1]
-              apiErrors[field] = err
+              apiErrors[field] = err.msg || "Invalid value."
             }
           })
           setErrors(apiErrors)
@@ -175,15 +187,13 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
                 Username
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <UserIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="username"
                   type="text"
                   value={formData.username}
                   onChange={(e) => handleInputChange("username", e.target.value)}
-                  className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pl-10 ${
-                    errors.username ? "border-red-500" : ""
-                  }`}
+                  className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pl-10 ${errors.username ? "border-red-500" : ""}`}
                   placeholder="Enter username"
                   required
                 />
@@ -202,9 +212,7 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pl-10 ${
-                    errors.email ? "border-red-500" : ""
-                  }`}
+                  className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pl-10 ${errors.email ? "border-red-500" : ""}`}
                   placeholder="Enter email address"
                   required
                 />
@@ -241,7 +249,7 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
                 <SelectContent className="bg-gray-900 border-white/20">
                   <SelectItem value="user" className="text-white hover:bg-white/10">
                     <div className="flex items-center">
-                      <Mail className="h-4 w-4 mr-2" />
+                      <UserIcon className="h-4 w-4 mr-2" />
                       Regular User
                     </div>
                   </SelectItem>
@@ -255,7 +263,60 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
               </Select>
             </div>
 
-            {!user && (
+            {user ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword" className="text-white">
+                    New Password (optional)
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pr-10 ${errors.password ? "border-red-500" : ""}`}
+                      placeholder="Leave blank to keep current password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-white"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <SafeErrorDisplay error={errors.password} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmNewPassword" className="text-white">
+                    Confirm New Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmNewPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pr-10 ${errors.confirmPassword ? "border-red-500" : ""}`}
+                      placeholder="Confirm new password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-white"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <SafeErrorDisplay error={errors.confirmPassword} />
+                </div>
+              </>
+            ) : (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-white">
@@ -267,9 +328,7 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
                       onChange={(e) => handleInputChange("password", e.target.value)}
-                      className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pr-10 ${
-                        errors.password ? "border-red-500" : ""
-                      }`}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pr-10 ${errors.password ? "border-red-500" : ""}`}
                       placeholder="Enter password"
                       required
                     />
@@ -285,7 +344,6 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
                   </div>
                   <SafeErrorDisplay error={errors.password} />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword" className="text-white">
                     Confirm Password
@@ -296,9 +354,7 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
                       type={showConfirmPassword ? "text" : "password"}
                       value={formData.confirmPassword}
                       onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                      className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pr-10 ${
-                        errors.confirmPassword ? "border-red-500" : ""
-                      }`}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pr-10 ${errors.confirmPassword ? "border-red-500" : ""}`}
                       placeholder="Confirm password"
                       required
                     />
@@ -317,41 +373,11 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
               </>
             )}
 
-            {user && (
-              <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-white">
-                  New Password (optional)
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="newPassword"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={(e) => handleInputChange("password", e.target.value)}
-                    className={`bg-white/10 border-white/20 text-white placeholder:text-gray-400 pr-10 ${
-                      errors.password ? "border-red-500" : ""
-                    }`}
-                    placeholder="Leave blank to keep current password"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-white"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <SafeErrorDisplay error={errors.password} />
-              </div>
-            )}
-
             {formError && (
               <Alert variant="destructive" className="border-red-500/30 bg-red-500/10">
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4 text-red-400" />
                 <AlertDescription>
-                  <SafeErrorDisplay error={formError} className="text-red-400" />
+                  <SafeErrorDisplay error={formError} />
                 </AlertDescription>
               </Alert>
             )}

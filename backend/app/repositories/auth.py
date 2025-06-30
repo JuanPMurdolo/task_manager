@@ -68,19 +68,17 @@ class AuthRepository(AbstractAuthRepository):
         await self.db.commit()
         return user
 
-    async def update_user_in_db(self, user_id: int, user_data):
+    async def update_user_in_db(self, user_id: int, update_data: dict):
         user = await self.db.get(User, user_id)
         if not user:
             return None
 
-        if user_data.username is not None:
-            user.username = user_data.username
-        if user_data.email is not None:
-            user.email = user_data.email
-        if user_data.full_name is not None:
-            user.full_name = user_data.full_name
-        if user_data.password is not None:
-            user.hashed_password = pwd_context.hash(user_data.password)
+        for key, value in update_data.items():
+            # El router envía la contraseña hasheada bajo la clave "password"
+            # El modelo de la BD la almacena como "hashed_password"
+            db_key = "hashed_password" if key == "password" else key
+            if hasattr(user, db_key):
+                setattr(user, db_key, value)
         
         await self.db.commit()
         await self.db.refresh(user)
