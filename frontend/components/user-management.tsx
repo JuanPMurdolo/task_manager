@@ -292,7 +292,6 @@ export function UserManagement({
           user={editingUser}
           onUserCreated={handleUserFormSubmit}
           onUserUpdated={handleUserFormSubmit}
-          onError={handleUserFormError}
           onClose={() => {
             setShowUserForm(false)
             setEditingUser(null)

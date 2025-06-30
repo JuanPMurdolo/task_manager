@@ -107,7 +107,7 @@ export function UserForm({ user, onUserCreated, onUserUpdated, onClose }: UserFo
 
     try {
       const token = localStorage.getItem("token")
-      const url = user ? `http://localhost:8000/users/${user.id}` : "http://localhost:8000/auth/register"
+      const url = user ? `http://localhost:8000/users/${user.id}` : "http://localhost:8000/users/"
       const method = user ? "PUT" : "POST"
 
       const requestBody: any = {
