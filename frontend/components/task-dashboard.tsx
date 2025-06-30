@@ -9,7 +9,8 @@ import { TaskForm } from "@/components/task-form"
 import { UserManagement } from "@/components/user-management"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LogOut, Plus, CheckSquare, Clock, AlertCircle, Users, Shield, UserPlus } from 'lucide-react'
+import { LogOut, Plus, CheckSquare, Clock, AlertCircle, Users, Shield, UserPlus } from "lucide-react"
+import { TaskDetailModal } from "@/components/task-detail-modal"
 
 interface User {
   id: number
@@ -44,6 +45,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState("tasks")
@@ -103,7 +105,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
 
   const handleTaskCreated = (newTask: Task) => {
     setTasks([...tasks, newTask])
-    setFilteredTasks([...filteredTasks, newTask])
+    setFilteredTasks([...tasks, newTask])
     setShowTaskForm(false)
     setError("")
   }
@@ -112,6 +114,9 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
     const updatedTasks = tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
     setTasks(updatedTasks)
     setFilteredTasks(updatedTasks)
+    if (selectedTask && selectedTask.id === updatedTask.id) {
+      setSelectedTask(updatedTask)
+    }
     setEditingTask(null)
     setShowTaskForm(false)
     setError("")
@@ -121,11 +126,19 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
     const updatedTasks = tasks.filter((task) => task.id !== taskId)
     setTasks(updatedTasks)
     setFilteredTasks(updatedTasks)
+    if (selectedTask && selectedTask.id === taskId) {
+      setSelectedTask(null)
+    }
   }
 
   const handleEditTask = (task: Task) => {
     setEditingTask(task)
     setShowTaskForm(true)
+    setSelectedTask(null)
+  }
+
+  const handleViewTask = (task: Task) => {
+    setSelectedTask(task)
   }
 
   const handleFiltersChange = (filtered: Task[]) => {
@@ -163,7 +176,10 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
   if (isLoading) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
-        <div data-testid="loading-spinner" className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div
+          data-testid="loading-spinner"
+          className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"
+        ></div>
       </div>
     )
   }
@@ -307,6 +323,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
                   onTaskUpdated={handleTaskUpdated}
                   onTaskDeleted={handleTaskDeleted}
                   onEditTask={handleEditTask}
+                  onViewTask={handleViewTask}
                 />
               </div>
             </div>
@@ -336,6 +353,19 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
             setShowTaskForm(false)
             setEditingTask(null)
           }}
+        />
+      )}
+
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          users={users}
+          currentUser={currentUser}
+          onClose={() => setSelectedTask(null)}
+          onEditTask={handleEditTask}
+          onTaskUpdated={handleTaskUpdated}
+          onTaskDeleted={handleTaskDeleted}
         />
       )}
     </div>

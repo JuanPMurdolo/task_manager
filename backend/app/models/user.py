@@ -14,6 +14,12 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     type = Column(String, default="user")  # e.g., "admin", "user"
     created_at = Column(DateTime, server_default=func.now())
+    
+
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    # Relaciones con comentarios
+    comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
 
     # Relaciones bidireccionales con Task
     tasks_created = relationship("Task", back_populates="creator", foreign_keys="Task.created_by")

@@ -14,9 +14,13 @@ class Task(Base):
     updated_at = Column(DateTime, nullable=True)
     due_date = Column(DateTime, nullable=True)
 
+
     created_by = Column(Integer, ForeignKey("users.id"))
     updated_by = Column(Integer, ForeignKey("users.id"))
     assigned_to = Column(Integer, ForeignKey("users.id"))
+
+    #relacion con tabla Comments
+    comments = relationship("Comment", back_populates="task", cascade="all, delete-orphan")
 
     # Relaciones bidireccionales
     creator = relationship("User", back_populates="tasks_created", foreign_keys=[created_by])

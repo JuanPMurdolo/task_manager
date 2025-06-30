@@ -28,36 +28,44 @@ interface TaskListProps {
   onTaskUpdated: (task: Task) => void
   onTaskDeleted: (taskId: number) => void
   onEditTask: (task: Task) => void
+  onViewTask: (task: Task) => void
 }
 
-export function TaskList({ tasks, users, currentUser, onTaskUpdated, onTaskDeleted, onEditTask }: TaskListProps) {
+export function TaskList({
+  tasks,
+  users,
+  currentUser,
+  onTaskUpdated,
+  onTaskDeleted,
+  onEditTask,
+  onViewTask,
+}: TaskListProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleStatusChange = async (task: Task, newStatus: string) => {
-  setIsLoading(true)
-  try {
-    const token = localStorage.getItem("token")
-    const response = await fetch(`http://localhost:8000/tasks/${task.id}/status?status=${newStatus}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    setIsLoading(true)
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`http://localhost:8000/tasks/${task.id}/status?status=${newStatus}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
 
-    if (response.ok) {
-      const updatedTask = await response.json()
-      onTaskUpdated(updatedTask)
-    } else {
-      const errorData = await response.json()
-      console.error("Error updating status:", errorData)
+      if (response.ok) {
+        const updatedTask = await response.json()
+        onTaskUpdated(updatedTask)
+      } else {
+        const errorData = await response.json()
+        console.error("Error updating status:", errorData)
+      }
+    } catch (error) {
+      console.error("Failed to update task status:", error)
+    } finally {
+      setIsLoading(false)
     }
-  } catch (error) {
-    console.error("Failed to update task status:", error)
-  } finally {
-    setIsLoading(false)
   }
-}
-
 
   const handleDeleteTask = async (taskId: number) => {
     if (!confirm("Are you sure you want to delete this task?")) {
@@ -84,22 +92,22 @@ export function TaskList({ tasks, users, currentUser, onTaskUpdated, onTaskDelet
     }
   }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "completed":
-      return "bg-green-500/20 text-green-400 border-green-500/30"
-    case "in_progress":
-      return "bg-blue-500/20 text-blue-400 border-blue-500/30"
-    case "pending":
-      return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-    case "hold":
-      return "bg-orange-500/20 text-orange-400 border-orange-500/30"
-    case "cancelled":
-      return "bg-red-500/20 text-gray-400 border-red-500/30"
-    default:
-      return "bg-gray-500/20 text-gray-400 border-gray-500/30"
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-500/20 text-green-400 border-green-500/30"
+      case "in_progress":
+        return "bg-blue-500/20 text-blue-400 border-blue-500/30"
+      case "pending":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+      case "hold":
+        return "bg-orange-500/20 text-orange-400 border-orange-500/30"
+      case "cancelled":
+        return "bg-red-500/20 text-gray-400 border-red-500/30"
+      default:
+        return "bg-gray-500/20 text-gray-400 border-gray-500/30"
+    }
   }
-}
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -116,22 +124,22 @@ const getStatusColor = (status: string) => {
     }
   }
 
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "completed":
-      return <CheckCircle2 className="h-3 w-3" />
-    case "in_progress":
-      return <Clock className="h-3 w-3" />
-    case "pending":
-      return <AlertCircle className="h-3 w-3" />
-    case "hold":
-      return <Clock className="h-3 w-3" />  // o PauseCircle si usás otro ícono
-    case "cancelled":
-      return <AlertCircle className="h-3 w-3" />  // o XCircle si tenés instalado
-    default:
-      return <AlertCircle className="h-3 w-3" />
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <CheckCircle2 className="h-3 w-3" />
+      case "in_progress":
+        return <Clock className="h-3 w-3" />
+      case "pending":
+        return <AlertCircle className="h-3 w-3" />
+      case "hold":
+        return <Clock className="h-3 w-3" /> // o PauseCircle si usás otro ícono
+      case "cancelled":
+        return <AlertCircle className="h-3 w-3" /> // o XCircle si tenés instalado
+      default:
+        return <AlertCircle className="h-3 w-3" />
+    }
   }
-}
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -179,7 +187,11 @@ const getStatusIcon = (status: string) => {
         const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== "completed"
 
         return (
-          <Card key={task.id} className="card-gradient border-white/10 hover:border-white/20 transition-colors">
+          <Card
+            key={task.id}
+            className="card-gradient border-white/10 hover:border-primary/50 transition-colors cursor-pointer"
+            onClick={() => onViewTask(task)}
+          >
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -190,7 +202,10 @@ const getStatusIcon = (status: string) => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onEditTask(task)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEditTask(task)
+                    }}
                     className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-white/10"
                   >
                     <Edit className="h-3 w-3" />
@@ -198,7 +213,10 @@ const getStatusIcon = (status: string) => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDeleteTask(task.id)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteTask(task.id)
+                    }}
                     disabled={isLoading}
                     className="h-8 w-8 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
                   >
@@ -257,7 +275,7 @@ const getStatusIcon = (status: string) => {
               </div>
 
               {/* Quick Status Actions */}
-             <div className="flex items-center space-x-2 pt-2">
+              <div className="flex items-center space-x-2 pt-2">
                 <span className="text-xs text-gray-400">Quick actions:</span>
                 {["pending", "hold", "in_progress", "completed", "cancelled"]
                   .filter((s) => s !== task.status)
@@ -266,18 +284,21 @@ const getStatusIcon = (status: string) => {
                       key={status}
                       variant="outline"
                       size="sm"
-                      onClick={() => handleStatusChange(task, status)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleStatusChange(task, status)
+                      }}
                       disabled={isLoading}
                       className={`h-6 px-2 text-xs ${
                         status === "pending"
                           ? "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10"
                           : status === "hold"
-                          ? "border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
-                          : status === "in_progress"
-                          ? "border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
-                          : status === "completed"
-                          ? "border-green-500/30 text-green-400 hover:bg-green-500/10"
-                          : "border-gray-500/30 text-gray-400 hover:bg-gray-500/10"
+                            ? "border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
+                            : status === "in_progress"
+                              ? "border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                              : status === "completed"
+                                ? "border-green-500/30 text-green-400 hover:bg-green-500/10"
+                                : "border-gray-500/30 text-gray-400 hover:bg-gray-500/10"
                       }`}
                     >
                       {status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}

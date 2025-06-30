@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.task import Task
-from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate, TaskBulkUpdate
+from app.models.comments import Comment
+from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate, TaskBulkUpdate, TaskComment
 from app.repositories.interfaces.task import AbstractTaskRepository
 
 class TaskRepository(AbstractTaskRepository):
@@ -178,3 +179,41 @@ class TaskRepository(AbstractTaskRepository):
         await self.db.delete(task)
         await self.db.commit()
         return task
+
+    async def delete_comment_from_task_in_db(self, comment_id: int) -> bool:
+        comment = await self.db.get(Comment, comment_id)
+        if not comment:
+            return False
+
+        await self.db.delete(comment)
+        await self.db.commit()
+        return True
+    
+    async def get_comments_for_task_in_db(self, task_id: int) -> List[Comment]:
+        result = await self.db.execute(select(Comment).where(Comment.task_id == task_id))
+        return result.scalars().all()
+    
+    async def add_comment_to_task_in_db(self, task_id: int, comment_data: TaskComment, user_id: int) -> Comment:
+        new_comment = Comment(
+            content=comment_data.content,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+            task_id=task_id,
+            user_id=user_id
+        )
+        self.db.add(new_comment)
+        await self.db.commit()
+        await self.db.refresh(new_comment)
+        return new_comment
+
+    async def update_comment_in_db(self, comment_id: int, new_content: str) -> Optional[Comment]:
+        comment = await self.db.get(Comment, comment_id)
+        if not comment:
+            return None
+
+        comment.content = new_content
+        comment.updated_at = datetime.utcnow()
+
+        await self.db.commit()
+        await self.db.refresh(comment)
+        return comment
