@@ -46,6 +46,7 @@ async def register(
     user_data: UserCreate,
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    user_data.password = pwd_context.hash(user_data.password)
     user = await auth_service.register_user(user_data)
     return UserResponse.from_orm(user)
 

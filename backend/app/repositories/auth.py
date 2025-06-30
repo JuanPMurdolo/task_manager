@@ -20,7 +20,8 @@ class AuthRepository(AbstractAuthRepository):
         return await self.get_user_by_email_in_db(email)
     
     async def create_user(self, user_data, hashed: bool = False) -> User:
-        return await self.create_user_in_db(user_data, hashed)
+        hashed_password = pwd_context.hash(user_data.password)
+        return await self.create_user_in_db(user_data, hashed_password)
     
     def hash_password(self, plain: str) -> str:
         return pwd_context.hash(plain)
