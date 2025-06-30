@@ -71,7 +71,7 @@ Base de datos (SQLite)
 
 ⚙️ Consideraciones Extra
 
-* Se evitó usar librerías o SDKs que requieran logins o cuentas externas, cumpliendo el requisito de ejecución limpia en Linux/mac. Se testeo todo en Windows 11 y en Mac m2. <Enlace al video>
+* Se evitó usar librerías o SDKs que requieran logins o cuentas externas, cumpliendo el requisito de ejecución limpia en Linux/mac. Se testeo todo en Windows 11 y en Mac m2. [<Enlace al video>](https://youtu.be/qhGNco5wlAA)
 
 * Se agregó un .env para configurar el uso de SQLite o PostgreSQL sin cambiar el código.
 
