@@ -1,3 +1,4 @@
+from app.dependencies.auth import get_auth_service
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -8,64 +9,71 @@ from passlib.context import CryptContext
 
 from app.models.user import User
 from app.core.database import get_db
-from app.schemas.user import LoginResponse, LoginRequest, UserResponse, UserCreate
+from app.schemas.auth import LoginResponse, LoginRequest, UserResponse, UserCreate
 from app.core.auth import authenticate_user, create_access_token, get_current_user
-from app.repositories.auth import (
-    get_user_by_username_in_db,
-    get_user_by_email_in_db,
-    create_user_in_db,
-    get_all_users_in_db,
-)
+from app.services.auth import AuthService
 
 router = APIRouter()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @router.post("/auth/login", response_model=LoginResponse)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    user = await get_user_by_username_in_db(db, form_data.username)
-    if user is None or not authenticate_user(user, form_data.password):
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    """
+    Login endpoint for user authentication.
+    This endpoint uses OAuth2PasswordRequestForm to receive username and password.
+    It authenticates the user and returns an access token if successful.
+    :param form_data: OAuth2PasswordRequestForm containing username and password.
+    :param auth_service: AuthService dependency for user authentication.
+    :return: LoginResponse schema containing the access token, token type, and user data.
+    :raises HTTPException: If the credentials are invalid, it raises a 401 Unauthorized error.
+    """
+    user = await auth_service.authenticate_user(form_data.username, form_data.password)
+    if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-
     access_token = create_access_token(data={"sub": user.username}, expires_delta=timedelta(minutes=30))
-    return LoginResponse(access_token=access_token, token_type="bearer", user=UserResponse.from_orm(user))
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse.from_orm(user)
+    )
 
 @router.post("/auth/register", response_model=UserResponse)
-async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
-    if await get_user_by_username_in_db(db, user_data.username):
-        raise HTTPException(status_code=400, detail="Username already registered")
-    if await get_user_by_email_in_db(db, user_data.email):
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    user = await create_user_in_db(db, user_data)
+async def register(
+    user_data: UserCreate,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    user = await auth_service.register_user(user_data)
     return UserResponse.from_orm(user)
+
 
 @router.post("/auth/logout")
 async def logout():
     return {"message": "Logout successful. Please delete the token on the client side."}
 
+
 @router.get("/auth/check", response_model=UserResponse)
-async def check_permissions(current_user = Depends(get_current_user)):
+async def check_permissions(current_user: User = Depends(get_current_user)):
     return UserResponse.from_orm(current_user)
 
+
 @router.get("/users/getall", response_model=List[UserResponse])
-async def get_all(db: AsyncSession = Depends(get_db)):
-    users = await get_all_users_in_db(db)
+async def get_all_users(auth_service: AuthService = Depends(get_auth_service)):
+    users = await auth_service.get_all_users()
     return [UserResponse.from_orm(u) for u in users]
+
 
 @router.post("/users", response_model=UserResponse)
 async def admin_create_user(
     user_data: UserCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service)
 ):
     if current_user.type != "admin":
         raise HTTPException(status_code=403, detail="Only admins can create users")
 
-    if await get_user_by_username_in_db(db, user_data.username):
-        raise HTTPException(status_code=400, detail="Username already registered")
-    if await get_user_by_email_in_db(db, user_data.email):
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    user = await create_user_in_db(db, user_data, hashed=True)
+    user = await auth_service.admin_create_user(user_data)
     return UserResponse.from_orm(user)

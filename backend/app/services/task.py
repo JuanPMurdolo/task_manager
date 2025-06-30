@@ -8,7 +8,7 @@ from datetime import datetime
 from app.models.user import User
 from app.models.task import Task
 from app.schemas.task import TaskCommentResponse, TaskUpdate, TaskBulkUpdate, TaskResponse, TaskComment, TaskCommentResponse, PaginationParams, TaskCreate
-from app.schemas.user import UserResponse, UserCreate
+from app.schemas.auth import UserResponse, UserCreate
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.repositories.task import TaskRepository

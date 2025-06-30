@@ -10,7 +10,6 @@ class TaskCreate(BaseModel):
     due_date: Optional[datetime] = None
     assigned_to: Optional[int] = None
 
-
 class TaskResponse(BaseModel):
     id: int
     title: str
@@ -20,9 +19,9 @@ class TaskResponse(BaseModel):
     due_date: Optional[datetime]
     created_at: datetime
     updated_at: datetime
-    created_by: str  # nombre de usuario
-    updated_by: Optional[str]  # nombre de usuario
-    assigned_to: Optional[str]  # nombre de usuario o None
+    created_by: str  # Username of the creator
+    updated_by: Optional[str]  #  Username of the last updater
+    assigned_to: Optional[str]  #   Username of the assignee
 
 
     class Config:

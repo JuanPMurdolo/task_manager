@@ -11,7 +11,7 @@ python -c "
 import asyncio
 from app.database import init_db, AsyncSessionLocal
 from app.models.user import User
-from app.schemas.user import UserCreate
+from app.schemas.auth import UserCreate
 from sqlalchemy import select
 from passlib.context import CryptContext
 

@@ -1,3 +1,4 @@
+from app.repositories.interfaces.auth import AbstractAuthRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from passlib.context import CryptContext
@@ -6,36 +7,53 @@ from app.core.database import get_db
 
 from app.models.user import User
 
-db: AsyncSession = Depends(get_db)
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-async def get_user_by_username_in_db(db, username: str):
-    result = await db.execute(select(User).where(User.username == username))
-    return result.scalar_one_or_none()
+class AuthRepository(AbstractAuthRepository):
+    def __init__(self, db: AsyncSession):
+        self.db = db
+        
+    async def get_user_by_username(self, username: str) -> User | None:
+        return await self.get_user_by_username_in_db(username)
+    
+    async def get_user_by_email(self, email: str) -> User | None:
+        return await self.get_user_by_email_in_db(email)
+    
+    async def create_user(self, user_data, hashed: bool = False) -> User:
+        return await self.create_user_in_db(user_data, hashed)
+    
+    async def hash_password(self, plain):
+        return super().hash_password(plain)
+    
+    def verify_password(self, plain: str, hashed: str) -> bool:
+        return pwd_context.verify(plain, hashed)
 
-async def get_user_by_email_in_db(db, email: str):
-    result = await db.execute(select(User).where(User.email == email))
-    return result.scalar_one_or_none()
+    async def get_user_by_username_in_db(self, username: str):
+        result = await self.db.execute(select(User).where(User.username == username))
+        return result.scalar_one_or_none()
 
-async def create_user_in_db(db, user_data, hashed: bool = False):
-    password = user_data.password
-    hashed_password = password if hashed else pwd_context.hash(password)
+    async def get_user_by_email_in_db(db, email: str):
+        result = await db.execute(select(User).where(User.email == email))
+        return result.scalar_one_or_none()
 
-    new_user = User(
-        username=user_data.username,
-        email=user_data.email,
-        full_name=user_data.full_name,
-        hashed_password=hashed_password,
-        is_active=True,
-        type=getattr(user_data, "type", "user"),
-    )
+    async def create_user_in_db(self, user_data, hashed: bool = False):
+        password = user_data.password
+        hashed_password = password if hashed else pwd_context.hash(password)
 
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
-    return new_user
+        new_user = User(
+            username=user_data.username,
+            email=user_data.email,
+            full_name=user_data.full_name,
+            hashed_password=hashed_password,
+            is_active=True,
+            type=getattr(user_data, "type", "user"),
+        )
 
-async def get_all_users_in_db(db):
-    result = await db.execute(select(User))
-    return result.scalars().all()
+        self.db.add(new_user)
+        await self.db.commit()
+        await self.db.refresh(new_user)
+        return new_user
+
+    async def get_all_users_in_db(self):
+        result = await self.db.execute(select(User))
+        return result.scalars().all()
