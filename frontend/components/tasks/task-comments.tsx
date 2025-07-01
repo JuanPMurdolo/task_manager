@@ -151,18 +151,82 @@ export function TaskComments({ taskId, currentUser, users }: TaskCommentsProps) 
     return "??"
   }
 
-  const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const seconds = Math.round((now.getTime() - date.getTime()) / 1000)
-    const minutes = Math.round(seconds / 60)
-    const hours = Math.round(minutes / 60)
-    const days = Math.round(hours / 24)
+const formatRelativeTime = (dateString: string) => {
+    try {
+      // Asegurar que la fecha se interprete correctamente
+      // Si no tiene zona horaria, asumir que es UTC
+      let dateToProcess = dateString
+      if (!dateString.includes("Z") && !dateString.includes("+") && !dateString.includes("-", 10)) {
+        dateToProcess = dateString + "Z" // Agregar Z para indicar UTC
+      }
 
-    if (seconds < 60) return `${seconds}s ago`
-    if (minutes < 60) return `${minutes}m ago`
-    if (hours < 24) return `${hours}h ago`
-    return `${days}d ago`
+      const date = new Date(dateToProcess)
+      const now = new Date()
+
+      // Verificar que la fecha sea válida
+      if (isNaN(date.getTime())) {
+        return "Invalid date"
+      }
+
+      const diffInMs = now.getTime() - date.getTime()
+      const diffInSeconds = Math.floor(diffInMs / 1000)
+
+      // Si la diferencia es negativa (fecha en el futuro), mostrar "just now"
+      if (diffInSeconds < 0) {
+        return "just now"
+      }
+
+      // Calcular intervalos
+      const intervals = {
+        year: 31536000,
+        month: 2592000,
+        week: 604800,
+        day: 86400,
+        hour: 3600,
+        minute: 60,
+      }
+
+      if (diffInSeconds < 60) {
+        return diffInSeconds <= 5 ? "just now" : `${diffInSeconds}s ago`
+      }
+
+      for (const [unit, seconds] of Object.entries(intervals)) {
+        const interval = Math.floor(diffInSeconds / seconds)
+        if (interval >= 1) {
+          return `${interval}${unit.charAt(0)} ago` // y, mo, w, d, h, m
+        }
+      }
+
+      return "just now"
+    } catch (error) {
+      console.error("Error formatting date:", error)
+      return "unknown"
+    }
+  }
+
+  const formatFullDate = (dateString: string) => {
+    try {
+      let dateToProcess = dateString
+      if (!dateString.includes("Z") && !dateString.includes("+") && !dateString.includes("-", 10)) {
+        dateToProcess = dateString + "Z"
+      }
+
+      const date = new Date(dateToProcess)
+      if (isNaN(date.getTime())) {
+        return "Invalid date"
+      }
+
+      return date.toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    } catch (error) {
+      console.error("Error formatting full date:", error)
+      return "Unknown date"
+    }
   }
 
   return (
