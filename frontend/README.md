@@ -1,178 +1,200 @@
-# Task Manager Frontend
+# Gestor de Tareas Frontend
 
-A modern task management application built with Next.js, TypeScript, and Tailwind CSS.
+Una aplicación moderna de gestión de tareas construida con Next.js, TypeScript y Tailwind CSS.
 
-## Quick Start
+## Inicio Rápido
 
-### Prerequisites
+### Prerrequisitos
+
 - Node.js 18+ 
-- npm or yarn
+- npm o yarn
 
-### Development Setup
+### Configuración de Desarrollo
 
 \`\`\`bash
-# Install dependencies
+# Instalar dependencias
 make install
 
-# Start development server
+# Iniciar servidor de desarrollo
 make dev
 \`\`\`
 
-The application will be available at `http://localhost:3000`
+La aplicación estará disponible en `http://localhost:3000`
 
-## Available Commands
+## Comandos Disponibles
 
-### Development
-- `make dev` - Start development server
-- `make build` - Build for production
-- `make start` - Start production server
-- `make dev-setup` - Complete development environment setup
+### Desarrollo
 
-### Testing
-- `make test` - Run all tests
-- `make test-watch` - Run tests in watch mode
-- `make test-coverage` - Run tests with coverage report
-- `make test-unit` - Run unit tests only
-- `make test-integration` - Run integration tests only
-- `make test-ci` - Run tests for CI environment
+- `make dev` - Iniciar servidor de desarrollo
+- `make build` - Construir para producción
+- `make start` - Iniciar servidor de producción
+- `make dev-setup` - Configuración completa del entorno de desarrollo
 
-### Quality Checks
-- `make lint` - Run ESLint
-- `make lint-fix` - Run ESLint with auto-fix
-- `make type-check` - Run TypeScript type checking
-- `make check` - Run all quality checks (lint + type-check + test)
+### Pruebas
 
-### Specific Component Tests
-- `make test-login` - Test login form
-- `make test-dashboard` - Test dashboard
-- `make test-task-list` - Test task list
-- `make test-user-management` - Test user management
+- `make test` - Ejecutar todas las pruebas
+- `make test-watch` - Ejecutar pruebas en modo observación
+- `make test-coverage` - Ejecutar pruebas con reporte de cobertura
+- `make test-unit` - Ejecutar solo pruebas unitarias
+- `make test-integration` - Ejecutar solo pruebas de integración
+- `make test-ci` - Ejecutar pruebas para entorno CI
 
-### Maintenance
-- `make clean` - Clean build artifacts
-- `make fresh-install` - Clean install dependencies
-- `make audit` - Run security audit
-- `make deps-check` - Check for outdated dependencies
+### Verificaciones de Calidad
 
-### Utilities
-- `make help` - Show all available commands
-- `make info` - Show project information
-- `make status` - Show project status
+- `make lint` - Ejecutar ESLint
+- `make lint-fix` - Ejecutar ESLint con corrección automática
+- `make type-check` - Ejecutar verificación de tipos TypeScript
+- `make check` - Ejecutar todas las verificaciones de calidad (lint + type-check + test)
 
-## Project Structure
+### Pruebas de Componentes Específicos
+
+- `make test-login` - Probar formulario de login
+- `make test-dashboard` - Probar dashboard
+- `make test-task-list` - Probar lista de tareas
+- `make test-user-management` - Probar gestión de usuarios
+
+### Mantenimiento
+
+- `make clean` - Limpiar artefactos de construcción
+- `make fresh-install` - Instalación limpia de dependencias
+- `make audit` - Ejecutar auditoría de seguridad
+- `make deps-check` - Verificar dependencias desactualizadas
+
+### Utilidades
+
+- `make help` - Mostrar todos los comandos disponibles
+- `make info` - Mostrar información del proyecto
+- `make status` - Mostrar estado del proyecto
+
+## Estructura del Proyecto
 
 \`\`\`
-├── app/                    # Next.js app directory
-├── components/            # React components
-├── __tests__/            # Test files
-│   ├── components/       # Component tests
-│   ├── integration/      # Integration tests
-│   └── test-utils/       # Test utilities
-├── lib/                  # Utility functions
-└── public/              # Static assets
+├── app/                    # Directorio de la app Next.js
+├── components/    
+│   ├── auth/             # Login y registro
+│   ├── tasks/            # Manejo de tareas
+│   ├── users/            # Creacion y manejo de usuarios
+│   ├── utils/            # Mensajes y formatos de error
+│   └── ui/               # Componentes React
+├── __tests__/            # Archivos de prueba
+│   ├── components/       # Pruebas de componentes
+│   ├── integration/      # Pruebas de integración
+│── test-utils/       # Utilidades de prueba tuvieron que sacarse de la parte de test porque lo tomaba como un test mas
+└── scripts/                  # Contiene un script para correr los tests
 \`\`\`
 
-## Testing
+## Pruebas
 
-The project uses Jest and React Testing Library for testing:
+El proyecto utiliza Jest y React Testing Library para las pruebas:
 
-- **Unit Tests**: Test individual components in isolation
-- **Integration Tests**: Test component interactions and workflows
-- **Coverage**: Aim for >80% test coverage
+- **Pruebas Unitarias**: Prueban componentes individuales de forma aislada
+- **Pruebas de Integración**: Prueban interacciones entre componentes y flujos de trabajo
+- **Cobertura**: Objetivo de >80% de cobertura de pruebas
 
-### Running Tests
+### Ejecutar Pruebas
 
 \`\`\`bash
-# Run all tests
+# Ejecutar todas las pruebas
 make test
 
-# Run tests in watch mode during development
+# Ejecutar pruebas en modo observación durante el desarrollo
 make test-watch
 
-# Run tests with coverage report
+# Ejecutar pruebas con reporte de cobertura
 make test-coverage
 
-# Run specific test file
+# Ejecutar archivo de prueba específico
 make test-specific FILE=__tests__/components/login-form.test.tsx
 \`\`\`
 
-## Development Workflow
+## Flujo de Trabajo de Desarrollo
 
-1. **Setup**: `make dev-setup`
-2. **Development**: `make dev`
-3. **Testing**: `make test-watch` (in another terminal)
-4. **Quality Check**: `make check` (before committing)
-5. **Build**: `make build` (before deployment)
+1. **Configuración**: `make dev-setup`
+2. **Desarrollo**: `make dev`
+3. **Pruebas**: `make test-watch` (en otra terminal)
+4. **Verificación de Calidad**: `make check` (antes de hacer commit)
+5. **Construcción**: `make build` (antes del despliegue)
 
-## Code Quality
+## Calidad del Código
 
-The project enforces code quality through:
-- **ESLint**: Code linting and style enforcement
-- **TypeScript**: Type safety and better developer experience
-- **Prettier**: Code formatting (via ESLint)
-- **Jest**: Comprehensive testing
+El proyecto garantiza la calidad del código a través de:
 
-## Environment Variables
+- **ESLint**: Linting de código y aplicación de estilo
+- **TypeScript**: Seguridad de tipos y mejor experiencia de desarrollo
+- **Prettier**: Formateo de código (vía ESLint)
+- **Jest**: Pruebas exhaustivas
 
-Create a `.env.local` file for local development:
+## Variables de Entorno
+
+Crea un archivo `.env.local` para desarrollo local:
 
 \`\`\`env
-# API Configuration
+# Configuración de API
 NEXT_PUBLIC_API_URL=http://localhost:8000
 
-# Other environment variables...
+# Otras variables de entorno...
 \`\`\`
 
-## Deployment
+## Despliegue
 
-### Production Build
+### Construcción de Producción
+
 \`\`\`bash
 make build
 make start
 \`\`\`
 
-### Docker (Optional)
+### Docker (Opcional)
+
 \`\`\`bash
 make docker-build
 make docker-run
 \`\`\`
 
-## Contributing
+## Contribuir
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run quality checks: `make check`
-5. Submit a pull request
+1. Hacer fork del repositorio
+2. Crear una rama de funcionalidad
+3. Realizar los cambios
+4. Ejecutar verificaciones de calidad: `make check`
+5. Enviar un pull request
 
-## Troubleshooting
+## Solución de Problemas
 
-### Common Issues
+### Problemas Comunes
 
-**Dependencies not installing:**
+**Las dependencias no se instalan:**
+
 \`\`\`bash
 make clean
 make fresh-install
 \`\`\`
 
-**Tests failing:**
+**Las pruebas fallan:**
+
 \`\`\`bash
 make clean-cache
 make test
 \`\`\`
 
-**Build errors:**
+**Errores de construcción:**
+
 \`\`\`bash
 make type-check
 make lint
 \`\`\`
 
-### Getting Help
+### Obtener Ayuda
 
-- Run `make help` to see all available commands
-- Run `make status` to check project health
-- Run `make info` to see environment information
+- Ejecuta `make help` para ver todos los comandos disponibles
+- Ejecuta `make status` para verificar la salud del proyecto
+- Ejecuta `make info` para ver información del entorno
 
-## License
+## Tecnologías Utilizadas
 
-This project is licensed under the MIT License.
+- **Next.js 14+** - Framework de React para aplicaciones web
+- **TypeScript** - Superset tipado de JavaScript
+- **Tailwind CSS** - Framework de CSS utilitario
+- **React Testing Library** - Utilidades de prueba para React
+- **Jest** - Framework de pruebas JavaScript
+- **ESLint** - Herramienta de linting para JavaScript/TypeScript
