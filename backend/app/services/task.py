@@ -103,6 +103,12 @@ class TaskService:
         
         return (await self.repo.enrich_tasks_with_usernames(tasks=[task]))[0]
 
+    async def get_comment_by_id(self, comment_id: int) -> TaskCommentResponse:
+        comment = await self.repo.get_comment_by_id_in_db(comment_id)
+        if not comment:
+            raise HTTPException(status_code=404, detail="Comment not found")
+        return TaskCommentResponse.from_orm(comment)
+
     async def get_comments_for_task(self, task_id: int) -> List[TaskCommentResponse]:
         task = await self.repo.get_task_by_id_in_db(task_id)
         if not task:
@@ -124,7 +130,7 @@ class TaskService:
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
         
-        comment = await self.repo.delete_comment_from_task_in_db(task_id, comment_id)
+        comment = await self.repo.delete_comment_from_task_in_db(comment_id)
         if not comment:
             raise HTTPException(status_code=404, detail="Comment not found")
         

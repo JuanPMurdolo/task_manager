@@ -347,4 +347,9 @@ async def delete_task_comment(
     Raises:
         HTTPException: If the task or comment is not found or if the deletion fails.
     """
-    return await service.delete_comment_from_task(task_id, comment_id, current_user.id)
+    comment = await service.get_comment_by_id(comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    if comment.created_by_user != current_user.username and current_user.type != "admin":
+        raise HTTPException(status_code=403, detail="You do not have permission to delete this task")
+    return await service.delete_comment_from_task(task_id, comment_id)

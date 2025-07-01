@@ -191,6 +191,14 @@ class TaskRepository(AbstractTaskRepository):
         comments = result.scalars().all()
         return [TaskCommentResponse.from_orm(comment) for comment in comments]
 
+    async def get_comment_by_id_in_db(self, comment_id: int) -> Optional[Comment]:
+        result = await self.db.execute(
+            select(Comment)
+            .where(Comment.id == comment_id)
+            .options(selectinload(Comment.created_by_user))
+        )
+        return result.scalar_one_or_none()
+
     async def add_comment_to_task_in_db(self, task_id: int, comment_data: TaskCommentCreate, user_id: int) -> Comment:
         new_comment = Comment(
             content=comment_data.content,
