@@ -3,7 +3,6 @@
 import { UserForm } from "../../components/users/user-form"
 import { setupUser, render, screen, waitFor } from "@/test-utils/test-utils"
 
-
 const mockFetch = jest.fn()
 global.fetch = mockFetch
 

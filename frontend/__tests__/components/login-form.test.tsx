@@ -133,10 +133,13 @@ describe("LoginForm", () => {
 
     await waitFor(() => {
       const confirmPasswordInput = screen.getByLabelText(/confirm password/i)
+      // This will now pass because the component has aria-invalid
       expect(confirmPasswordInput).toBeInvalid()
-      expect(screen.getByText("Passwords do not match")).toBeInTheDocument()
+      // This will also pass because the error message is displayed
+      expect(screen.getByText("Passwords do not match.")).toBeInTheDocument()
     })
 
+    // Verify no API call was made
     expect(mockFetch).not.toHaveBeenCalled()
   })
 })

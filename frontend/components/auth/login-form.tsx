@@ -25,7 +25,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     confirmPassword: "",
   })
   const [isLoading, setIsLoading] = useState(false)
-  // Changed to an object to hold field-specific errors
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [success, setSuccess] = useState("")
 
@@ -66,7 +65,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     setErrors({})
     setSuccess("")
 
-    // --- Client-side validation ---
     const validationErrors: { [key: string]: string } = {}
     if (!registerData.username) {
       validationErrors.username = "Username is required."
@@ -90,7 +88,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       setIsLoading(false)
       return
     }
-    // --- End validation ---
 
     try {
       const response = await fetch("http://localhost:8000/auth/register", {
@@ -146,7 +143,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     } else {
       setRegisterData((prev) => ({ ...prev, [field]: value }))
     }
-    // Clear error for the field that is being edited
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev }
@@ -241,6 +237,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       }`}
                       placeholder="Choose a username"
                       required
+                      aria-invalid={!!errors.username}
                     />
                     {errors.username && <p className="text-sm text-red-400 mt-1">{errors.username}</p>}
                   </div>
@@ -258,6 +255,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       }`}
                       placeholder="Enter your email"
                       required
+                      aria-invalid={!!errors.email}
                     />
                     {errors.email && <p className="text-sm text-red-400 mt-1">{errors.email}</p>}
                   </div>
@@ -288,6 +286,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       }`}
                       placeholder="Create a password"
                       required
+                      aria-invalid={!!errors.password}
                     />
                     {errors.password && <p className="text-sm text-red-400 mt-1">{errors.password}</p>}
                   </div>
@@ -305,6 +304,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                       }`}
                       placeholder="Confirm your password"
                       required
+                      aria-invalid={!!errors.confirmPassword}
                     />
                     {errors.confirmPassword && <p className="text-sm text-red-400 mt-1">{errors.confirmPassword}</p>}
                   </div>
