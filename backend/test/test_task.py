@@ -7,8 +7,7 @@ from app.repositories.task import TaskRepository
 async def test_create_task_in_db(db_session, create_test_user):
     """Test creating a task in database."""
     user = await create_test_user("task_creator", "password123")
-    repo = TaskRepository(db_session)
-    
+    repo = TaskRepository(db_session))
     task_data = TaskCreate(
         title="Test Task Creation",
         description="Test task description",

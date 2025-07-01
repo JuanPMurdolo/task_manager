@@ -25,6 +25,7 @@ setup: ## Crea el entorno virtual e instala dependencias
 	$(VENV_ACTIVATE) && $(PIP) install --upgrade pip
 	$(VENV_ACTIVATE) && $(PIP) install -r $(REQUIREMENTS)
 	@echo "$(GREEN)✓ Development environment ready!$(NC)"
+	@echo "$(CYAN) Para activar el venv, correr: source ./$(VENV_NAME)/bin/activate$(NC)"
 
 .PHONY: install
 install: ##Instala dependencias
