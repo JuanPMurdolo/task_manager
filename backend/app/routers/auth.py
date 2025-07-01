@@ -46,22 +46,57 @@ async def register(
     user_data: UserCreate,
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    """
+    Register a new user.
+    This endpoint allows new users to register by providing their user data.
+    :param user_data: UserCreate schema containing the new user's data.
+    :param auth_service: AuthService dependency for user registration.
+    :return: UserResponse schema containing the newly created user's data.
+    :raises HTTPException: If the user already exists, it raises a 400 Bad Request error.
+    :raises HTTPException: If the registration fails, it raises a 500 Internal Server Error.
+    """
     user = await auth_service.register_user(user_data)
     return UserResponse.from_orm(user)
 
 
 @router.post("/auth/logout")
 async def logout():
+    """
+    Logout endpoint.
+    This endpoint is used to log out the user by invalidating the access token.
+    :return: A message indicating successful logout.
+    """
     return {"message": "Logout successful. Please delete the token on the client side."}
 
 
 @router.get("/auth/check", response_model=UserResponse)
 async def check_permissions(current_user: User = Depends(get_current_user)):
+    """
+    Check the current user's permissions.
+    This endpoint returns the current user's data if they are authenticated.
+    :param current_user: User dependency to get the currently authenticated user.
+    :return: UserResponse schema containing the current user's data.
+    :raises HTTPException: If the user is not authenticated, it raises a 401 Unauthorized
+    error.
+    """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not current_user.is_active:
+        raise HTTPException(status_code=403, detail="User is inactive")
+    if not current_user.is_verified:
+        raise HTTPException(status_code=403, detail="User is not verified")
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="User is not an admin")
     return UserResponse.from_orm(current_user)
 
 
 @router.get("/users/getall", response_model=List[UserResponse])
 async def get_all_users(auth_service: AuthService = Depends(get_auth_service)):
+    """ Get all users.
+    This endpoint retrieves all users from the database.
+    :param auth_service: AuthService dependency for user management.
+    :return: List of UserResponse schemas containing all users' data.
+    """
     users = await auth_service.get_all_users()
     return [UserResponse.from_orm(u) for u in users]
 
@@ -72,6 +107,16 @@ async def admin_create_user(
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    """
+    Create a new user.
+    This endpoint allows an admin to create a new user by providing the user data.
+    :param user_data: UserCreate schema containing the new user's data.
+    :param current_user: User dependency to get the currently authenticated user.
+    :param auth_service: AuthService dependency for user management.
+    :return: UserResponse schema containing the newly created user's data.
+    :raises HTTPException: If the current user is not an admin, it raises a 403 Forbidden error.
+    :raises HTTPException: If the user creation fails, it raises a 500 Internal Server Error.
+    """
     if current_user.type != "admin":
         raise HTTPException(status_code=403, detail="Only admins can create users")
 
@@ -84,6 +129,16 @@ async def admin_delete_user(
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    """
+    Delete a user by ID.
+    This endpoint allows an admin to delete a user by their ID.
+    :param user_id: ID of the user to be deleted.
+    :param current_user: User dependency to get the currently authenticated user.
+    :param auth_service: AuthService dependency for user management.
+    :return: UserResponse schema containing the deleted user's data.
+    :raises HTTPException: If the current user is not an admin, it raises a 403 Forbidden error.
+    :raises HTTPException: If the user to be deleted is not found, it raises a 404 Not Found error.
+    """
     if current_user.type != "admin":
         raise HTTPException(status_code=403, detail="Only admins can delete users")
     user = await auth_service.admin_delete_user(user_id)
@@ -98,6 +153,18 @@ async def admin_update_user(
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    """
+    Update a user by ID.
+    This endpoint allows an admin to update a user's data by their ID.
+    :param user_id: ID of the user to be updated.
+    :param user_data: UserUpdate schema containing the updated user's data.
+    :param current_user: User dependency to get the currently authenticated user.
+    :param auth_service: AuthService dependency for user management.
+    :return: UserResponse schema containing the updated user's data.
+    :raises HTTPException: If the current user is not an admin or the user being updated
+    is not the current user, it raises a 403 Forbidden error.
+    :raises HTTPException: If the user to be updated is not found or the update fails, it raises a 404 Not Found error.
+    """
     if current_user.type != "admin" and current_user.id != user_id:
         raise HTTPException(status_code=403, detail="Only admins can update users")
 

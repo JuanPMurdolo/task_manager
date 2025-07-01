@@ -78,8 +78,8 @@ class TaskCommentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     task_id: int
-    # En lugar de user_id, ahora tenemos el objeto de usuario completo
-    created_by_user: UserResponse
+    # Instead of the user ID, we can include a full user response
+    created_by_user: UserResponse 
 
     class Config:
         from_attributes = True
