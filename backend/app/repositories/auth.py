@@ -78,8 +78,9 @@ class AuthRepository(AbstractAuthRepository):
             return None
 
         for key, value in update_data.items():
-            # El router envía la contraseña hasheada bajo la clave "password"
-            # El modelo de la BD la almacena como "hashed_password"
+            # The router uses "password" as the key, but
+            # the database model stores it as "hashed_password".
+            # If the key is "password", we hash it before storing.
             db_key = "hashed_password" if key == "password" else key
             if hasattr(user, db_key):
                 setattr(user, db_key, value)
