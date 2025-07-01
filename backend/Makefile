@@ -68,33 +68,20 @@ db-migrate: ## Run database migrations
 	alembic upgrade head
 	@echo "$(GREEN)✓ Database migrated!$(NC)"
 
-.PHONY: db-reset
-db-reset: ## Reset database
-	@echo "$(RED)Resetting database...$(NC)"
-	rm -f tasks.db
-	$(MAKE) db-init
-	@echo "$(GREEN)✓ Database reset!$(NC)"
-
-.PHONY: db-seed
-db-seed: ## Seed database with sample data
-	@echo "$(YELLOW)Seeding database...$(NC)"
-	$(PYTHON) scripts/seed_db.py
-	@echo "$(GREEN)✓ Database seeded!$(NC)"
-
 # Docker
 .PHONY: docker-build
-docker-build: ## Build Docker image
+docker-build: ## Hacer build de Docker
 	@echo "$(YELLOW)Building Docker image...$(NC)"
 	docker build -t $(PROJECT_NAME) .
 	@echo "$(GREEN)✓ Docker image built!$(NC)"
 
 .PHONY: docker-run
-docker-run: ## Run Docker container
+docker-run: ## Correr Docker
 	@echo "$(CYAN)Running Docker container...$(NC)"
 	docker run -p 8000:8000 $(PROJECT_NAME)
 
 .PHONY: docker-dev
-docker-dev: ## Run Docker container in development mode
+docker-dev: ## Correr Docker en modo desarrollo
 	@echo "$(CYAN)Running Docker container in dev mode...$(NC)"
 	docker run -p 8000:8000 -v $(PWD):/app $(PROJECT_NAME)
 
