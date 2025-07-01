@@ -6,8 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.task import Task
-from app.models.comments import Comment
-from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate, TaskBulkUpdate, TaskCommentCreate, TaskCommentResponse
+from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate, TaskBulkUpdate
 from app.schemas.auth import UserResponse
 from sqlalchemy.orm import selectinload
 from app.repositories.interfaces.task import AbstractTaskRepository
@@ -181,49 +180,3 @@ class TaskRepository(AbstractTaskRepository):
         await self.db.delete(task)
         await self.db.commit()
         return task
-
-    async def get_comments_for_task_in_db(self, task_id: int) -> List[TaskCommentResponse]:
-        result = await self.db.execute(
-            select(Comment)
-            .where(Comment.task_id == task_id)
-            .options(selectinload(Comment.created_by_user))
-        )
-        comments = result.scalars().all()
-        return [TaskCommentResponse.from_orm(comment) for comment in comments]
-
-    async def get_comment_by_id_in_db(self, comment_id: int) -> Optional[Comment]:
-        result = await self.db.execute(
-            select(Comment)
-            .where(Comment.id == comment_id)
-            .options(selectinload(Comment.created_by_user))
-        )
-        return result.scalar_one_or_none()
-
-    async def add_comment_to_task_in_db(self, task_id: int, comment_data: TaskCommentCreate, user_id: int) -> Comment:
-        new_comment = Comment(
-            content=comment_data.content,
-            task_id=task_id,
-            user_id=user_id
-        )
-        self.db.add(new_comment)
-        await self.db.commit()
-        await self.db.refresh(new_comment)
-
-        result = await self.db.execute(
-            select(Comment)
-            .where(Comment.id == new_comment.id)
-            .options(selectinload(Comment.created_by_user))
-        )
-        return result.scalar_one()
-
-    async def delete_comment_from_task_in_db(self, comment_id: int) -> Optional[Comment]:
-        comment = await self.db.get(Comment, comment_id, options=[selectinload(Comment.created_by_user)])
-        if not comment:
-            return None
-        
-        deleted_comment_data = TaskCommentResponse.from_orm(comment)
-        
-        await self.db.delete(comment)
-        await self.db.commit()
-        
-        return deleted_comment_data

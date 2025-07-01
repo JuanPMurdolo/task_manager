@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 from app.routers.task import router as api_router
 from app.routers.auth import router as auth_router
+from app.routers.comment import router as comment_router
 from app.core.database import init_db, AsyncSessionLocal, create_admin
 
 app = FastAPI(
@@ -31,3 +32,4 @@ app.add_middleware(
     
 app.include_router(api_router)
 app.include_router(auth_router, tags=["auth"])
+app.include_router(comment_router, tags=["comments"])
