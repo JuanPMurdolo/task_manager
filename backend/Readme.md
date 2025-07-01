@@ -102,31 +102,37 @@ backend/
 │   │   └──auth.py
 │   ├── dependencies/    #Genera la conexion entre la instancia de servicio y la de repositorio
 │   │   ├── auth.py
+│   │   ├── comment.py
 │   │   └── task.py
 │   ├── models/              # Modelos SQLAlchemy
 │   │   ├── __init__.py
 │   │   ├── base.py
-│   │   ├── comments.py
+│   │   ├── comment.py
 │   │   ├── auth.py
 │   │   └── task.py
 │   ├── routers/             # Rutas de la API
 │   │   ├── __init__.py
 │   │   ├── auth.py
+│   │   ├── comment.py
 │   │   └── tasks.py
 │   ├── schemas/             # Esquemas Pydantic
 │   │   ├── __init__.py
 │   │   ├── auth.py
+│   │   ├── comment.py
 │   │   └── task.py
 │   ├── repositories/        # Capa de acceso a datos
 │   │   ├── __init__.py
 │   │   ├── auth.py
+│   │   ├── comment.py
 │   │   ├── task.py
 │   │   └── interface/
 │   │   │   ├──auth.py       #Interface abstracta de auth
+│   │   │   ├──comment.py 
 │   │   │   └──task.py       #Interface abstracta de task
 │   ├── services/            # Lógica de negocio
 │       ├── __init__.py
 │       ├── auth_service.py
+│       ├── comment_service.py
 │       └── task_service.py
 ├── tests/                   # Pruebas
 │   ├── __init__.py
