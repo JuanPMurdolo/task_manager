@@ -92,7 +92,7 @@ alembic upgrade head
 
 ## 📁 Estructura del Proyecto
 
-\`\`\`
+```
 backend/
 ├── app/
 │   ├── main.py  
@@ -140,7 +140,7 @@ backend/
 ├── .env                    # Variables de entorno
 ├── Dockerfile              # Imagen Docker
 └── README.md               # Este archivo
-\`\`\`
+```
 
 ## 🧪 Pruebas
 
