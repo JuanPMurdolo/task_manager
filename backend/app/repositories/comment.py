@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 from app.models.comment import Comment
 from app.schemas.comment import TaskCommentCreate, TaskCommentResponse
 from app.repositories.interfaces.comment import AbstractCommentRepository
+from app.models.user import User
 
 class CommentRepository(AbstractCommentRepository):
     def __init__(self, db: AsyncSession):
