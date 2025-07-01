@@ -67,8 +67,7 @@ La aplicación estará disponible en `http://localhost:3000`
 - `make status` - Mostrar estado del proyecto
 
 ## Estructura del Proyecto
-
-\`\`\`
+```
 ├── app/                    # Directorio de la app Next.js
 ├── components/    
 │   ├── auth/             # Login y registro
@@ -81,7 +80,7 @@ La aplicación estará disponible en `http://localhost:3000`
 │   ├── integration/      # Pruebas de integración
 │── test-utils/       # Utilidades de prueba tuvieron que sacarse de la parte de test porque lo tomaba como un test mas
 └── scripts/                  # Contiene un script para correr los tests
-\`\`\`
+```
 
 ## Pruebas
 
