@@ -105,8 +105,6 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
     }
   }
 
-
-
   const handleTaskCreated = (newTask: Task) => {
     setTasks(prevTasks => {
       const updatedTasks = [...prevTasks, newTask]
@@ -157,7 +155,9 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
   }
 
   const handleUserCreated = (newUser: User) => {
-    setUsers([...users, newUser])
+    setUsers(prevUsers => {
+      return [...prevUsers, newUser]
+    })
   }
 
   const handleUserUpdated = (updatedUser: User) => {
@@ -175,6 +175,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
     completed: tasks.filter((task) => task.status === "completed").length,
     pending: tasks.filter((task) => task.status === "pending").length,
     inProgress: tasks.filter((task) => task.status === "in_progress").length,
+    hold: tasks.filter((task) => task.status === "hold").length,
     assignedToMe: tasks.filter((task) => task.assigned_to === currentUser?.username).length,
   }
 
@@ -249,7 +250,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
 
       {/* Stats Cards */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
           <Card className="card-gradient border-white/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-300">Total Tasks</CardTitle>
@@ -287,6 +288,16 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-400">{stats.pending}</div>
+            </CardContent>
+          </Card>
+
+            <Card className="card-gradient border-white/10">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-300">On Hold</CardTitle>
+              <AlertCircle className="h-4 w-4 text-yellow-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-400">{stats.hold}</div>
             </CardContent>
           </Card>
 
