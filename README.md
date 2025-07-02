@@ -44,7 +44,7 @@ Base de datos (SQLite/Postgres)
 * Makefile incluido con comandos comunes (dev, test, lint, docker-build, etc.).
 
 * Base de Datos:
-    * Uso de SQLite por defecto (USE_SQLITE=true) para simplicidad local.
+    * Uso de SQLite (USE_SQLITE=true) para simplicidad local.
     * Soporte para PostgreSQL disponible con variable de entorno DATABASE_URL. testeado con Docker compose.
 
 🧩 Frontend
