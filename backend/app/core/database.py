@@ -40,7 +40,7 @@ async def create_admin():
         result = await session.execute(select(User).where(User.username == 'admin'))
         existing = result.scalar_one_or_none()
         if not existing:
-            hashed_password = pwd_context.hash('123456')
+            hashed_password = pwd_context.hash('admin123')
             admin = User(
                 username='admin',
                 email='admin@example.com',
