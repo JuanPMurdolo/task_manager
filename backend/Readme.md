@@ -41,8 +41,8 @@ cp .env.example .env
 2. **Configurar variables de entorno** en `.env`:
 \`\`\`env
 # Configuración de Base de Datos
-DATABASE_URL=postgresql://usuario:contraseña@localhost/task_management
-DATABASE_URL_TEST=postgresql://usuario:contraseña@localhost/task_management_test
+DATABASE_URL=postgresql://usuario:contraseña@localhost/tasksdb
+DATABASE_URL_TEST=postgresql://usuario:contraseña@localhost/tasksdb_test
 
 # Configuración JWT
 SECRET_KEY=tu_clave_secreta_super_segura
@@ -87,8 +87,6 @@ alembic upgrade head
 
 ### Documentación
 - **Swagger UI**: `http://127.0.0.1:8000/docs`
-- **ReDoc**: `http://127.0.0.1:8000/redoc`
-- **OpenAPI JSON**: `http://127.0.0.1:8000/openapi.json`
 
 ## 📁 Estructura del Proyecto
 
@@ -180,15 +178,6 @@ pytest -v
 \`\`\`bash
 # Iniciar servidor de desarrollo con recarga automática
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Generar nueva migración
-alembic revision --autogenerate -m "Descripción del cambio"
-
-# Aplicar migraciones
-alembic upgrade head
-
-# Revertir migración
-alembic downgrade -1
 \`\`\`
 
 ## 🐳 Docker
@@ -248,7 +237,7 @@ gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker
 ### Variables de Entorno de Producción
 
 \`\`\`env
-DATABASE_URL=postgresql://user:pass@host:port/dbname
+DATABASE_URL=postgresql://user:pass@host:port/tasksdb
 SECRET_KEY=your-super-secret-production-key
 DEBUG=False
 ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
@@ -303,12 +292,6 @@ alembic revision --autogenerate -m "Reset"
 - [Documentación de FastAPI](https://fastapi.tiangolo.com/)
 - [SQLAlchemy Async](https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html)
 - [Pydantic](https://pydantic-docs.helpmanual.io/)
-- [Alembic](https://alembic.sqlalchemy.org/)
-
-## 📄 Licencia
-
-Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
-
 ---
 
 **Desarrollado con ❤️ usando FastAPI y Python**
