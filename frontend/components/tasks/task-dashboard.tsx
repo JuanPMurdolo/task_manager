@@ -51,6 +51,7 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState("tasks")
 
+
   useEffect(() => {
     const userData = localStorage.getItem("user")
     if (userData) {
@@ -104,9 +105,14 @@ export function TaskDashboard({ onLogout }: TaskDashboardProps) {
     }
   }
 
+
+
   const handleTaskCreated = (newTask: Task) => {
-    setTasks([...tasks, newTask])
-    setFilteredTasks([...tasks, newTask])
+    setTasks(prevTasks => {
+      const updatedTasks = [...prevTasks, newTask]
+      setFilteredTasks(updatedTasks);
+      return updatedTasks;
+    })
     setShowTaskForm(false)
     setError("")
   }
