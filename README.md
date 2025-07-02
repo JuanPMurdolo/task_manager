@@ -67,7 +67,7 @@ Base de datos (SQLite)
 
 🐳 Docker y CI/CD
 
-* Dockerfile para el backend (docker-build, docker-run). Y el front.
+* Dockerfile para el backend (docker-build, docker-run). Y el front. Y docker compose para correr todo junto.
 
 ⚙️ Consideraciones Extra
 
