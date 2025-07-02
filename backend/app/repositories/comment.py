@@ -22,7 +22,7 @@ class CommentRepository(AbstractCommentRepository):
                 id=comment.id,
                 content=comment.content,
                 created_at=comment.created_at,
-                created_by_user=user_map.get(comment.user_id, "Desconocido")
+                created_by_user=user_map.get(comment.user_id, "Unknown User"),
             )
             for comment in comments
         ]

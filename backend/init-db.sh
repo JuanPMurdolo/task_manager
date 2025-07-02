@@ -9,7 +9,7 @@ sleep 5  # Espera para asegurarse que PostgreSQL ya esté arriba
 echo "Inicializando la base de datos..."
 python -c "
 import asyncio
-from app.database import init_db, AsyncSessionLocal
+from app.core.database import init_db, AsyncSessionLocal
 from app.models.user import User
 from app.schemas.auth import UserCreate
 from sqlalchemy import select

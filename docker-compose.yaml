@@ -5,7 +5,7 @@ services:
     build:
       context: ./frontend
     ports:
-      - "3000:80"
+      - "3000:3000"
     depends_on:
       - backend
     networks:
@@ -24,10 +24,11 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: tasks
       POSTGRES_HOST: db
+      DATABASE_URL: "postgresql+asyncpg://postgres:postgres@db/tasks"
     depends_on:
       - db
     command: >
-      bash -c "./init-db.sh && uvicorn main:app --host 0.0.0.0 --port 8000"
+      sh -c "./init-db.sh && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     networks:
       - app-network
 
