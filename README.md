@@ -13,7 +13,7 @@ Frontend (React)
 Backend (FastAPI + SQLAlchemy Async)
       |
       ↓
-Base de datos (SQLite)
+Base de datos (SQLite/Postgres)
 
 🧱 Backend
 
@@ -44,8 +44,9 @@ Base de datos (SQLite)
 * Makefile incluido con comandos comunes (dev, test, lint, docker-build, etc.).
 
 * Base de Datos:
-    * Uso de SQLite por defecto (USE_SQLITE=true) para simplicidad local.
-    * Soporte para PostgreSQL disponible con variable de entorno DATABASE_URL.
+    * Uso de SQLite (USE_SQLITE=true) para simplicidad local.
+    * Soporte para PostgreSQL disponible con variable de entorno DATABASE_URL. testeado con Docker compose.
+    * Ambas BBDDs inician con un usuario admin- con password admin123
 
 🧩 Frontend
 * Framework: React con Vite (mejor experiencia de desarrollo). Se uso lemon.me como punto de partida para el diseño y el uso de colores, se uso vercel v0 para armar un modelo acorde a los estilos
