@@ -214,7 +214,6 @@ Los logs se configuran automáticamente y incluyen:
 ### Mejores Prácticas Implementadas
 
 - Variables de entorno para configuración sensible
-- Separación de responsabilidades (Repository Pattern)
 - Validación exhaustiva de entrada
 - Manejo centralizado de errores
 - Logging de seguridad
