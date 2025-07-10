@@ -79,7 +79,7 @@ make test-specific FILE=__tests__/components/login-form.test.tsx
 
 ## Flujo de Trabajo de Desarrollo
 
-1. **Configuración**: `make dev-setup`
+1. **Configuración**: `make install`
 2. **Desarrollo**: `make dev`
 3. **Pruebas**: `make test-watch` (en otra terminal)
 4. **Verificación de Calidad**: `make check` (antes de hacer commit)
