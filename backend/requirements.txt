@@ -17,3 +17,4 @@ asyncpg
 python-dotenv
 greenlet
 pydantic[email]
+slowapi

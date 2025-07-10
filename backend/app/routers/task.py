@@ -15,11 +15,13 @@ from app.repositories.task import TaskRepository
 from app.repositories.interfaces.task import AbstractTaskRepository
 from app.services.task import TaskService
 from app.dependencies.task import get_task_service
+from slowapi.decorator import limiter
 
 router = APIRouter()
 
 
 @router.post("/tasks", response_model=TaskResponse)
+@limiter.limit("5/minute")
 async def create_task(
     task_data: TaskCreate,
     service: TaskService = Depends(get_task_service),
@@ -40,6 +42,7 @@ async def create_task(
     return new_task
 
 @router.put("/tasks/{task_id}", response_model=TaskResponse)
+@limiter.limit("5/minute")
 async def update_task(
     task_id: int,
     task_update: TaskUpdate,
@@ -64,6 +67,7 @@ async def update_task(
     return task
 
 @router.post("/tasks/bulk_update", response_model=List[TaskResponse])
+@limiter.limit("5/minute")
 async def bulk_update_tasks(
     task_update: TaskBulkUpdate,
     service: TaskService = Depends(get_task_service),
@@ -88,6 +92,7 @@ async def bulk_update_tasks(
     return await tasks
 
 @router.get("/tasks", response_model=List[TaskResponse])
+@limiter.limit("5/minute")
 async def list_tasks(
     pagination: PaginationParams = Depends(),
     service: TaskService = Depends(get_task_service)
@@ -106,6 +111,7 @@ async def list_tasks(
     
 
 @router.get("/tasks/created", response_model=List[TaskResponse])
+@limiter.limit("5/minute")
 async def get_created_tasks(
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service)
@@ -125,6 +131,7 @@ async def get_created_tasks(
     return tasks
 
 @router.get("/tasks/updated", response_model=List[TaskResponse])
+@limiter.limit("5/minute")
 async def get_updated_tasks(
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service)
@@ -143,6 +150,7 @@ async def get_updated_tasks(
     return tasks
 
 @router.get("/tasks/assigned", response_model=List[TaskResponse])
+@limiter.limit("5/minute")
 async def get_assigned_tasks(
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service)
@@ -161,6 +169,7 @@ async def get_assigned_tasks(
     return tasks
 
 @router.get("/tasks/overdue", response_model=List[TaskResponse])
+@limiter.limit("5/minute")
 async def get_overdue_tasks_endpoint(
     service: TaskService = Depends(get_task_service)
 ):
@@ -178,6 +187,7 @@ async def get_overdue_tasks_endpoint(
     return tasks
 
 @router.get("/tasks/search", response_model=List[TaskResponse])
+@limiter.limit("5/minute")
 async def search_tasks(
     query: str,
     service: TaskService = Depends(get_task_service),
@@ -200,6 +210,7 @@ async def search_tasks(
     return tasks
 
 @router.get("/tasks/created_by/{user_id}", response_model=List[TaskResponse])
+@limiter.limit("5/minute")
 async def get_tasks_created_by_user_route(
     user_id: int,
     service: TaskService = Depends(get_task_service)
@@ -217,6 +228,7 @@ async def get_tasks_created_by_user_route(
     return tasks
 
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
+@limiter.limit("5/minute")
 async def get_task(
     task_id: int,
     service: TaskService = Depends(get_task_service)
@@ -237,6 +249,7 @@ async def get_task(
     return task
 
 @router.put("/tasks/{task_id}/status", response_model=TaskResponse)
+@limiter.limit("5/minute")
 async def update_task_status(
     task_id: int,
     status: str,
@@ -264,6 +277,7 @@ async def update_task_status(
     return task
 
 @router.delete("/tasks/{task_id}", response_model=TaskResponse)
+@limiter.limit("5/minute")
 async def delete_task(
     task_id: int,
     service: TaskService = Depends(get_task_service),
