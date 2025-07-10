@@ -28,7 +28,6 @@ La aplicación estará disponible en `http://localhost:3000`
 - `make dev` - Iniciar servidor de desarrollo - El que se recomienda usar para la prueba 
 - `make build` - Construir para producción
 - `make start` - Iniciar servidor de producción
-- `make dev-setup` - Configuración completa del entorno de desarrollo
 
 ### Pruebas
 
