@@ -6,10 +6,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta, datetime
 from typing import List, Optional
 from passlib.context import CryptContext
-from slowapi.decorator import limiter
+
 
 from app.models.user import User
 from app.core.database import get_db
+from app.core.limiter import limiter
 from app.schemas.auth import LoginResponse, LoginRequest, UserResponse, UserCreate, UserUpdate
 from app.core.auth import authenticate_user, create_access_token, get_current_user
 from app.services.auth import AuthService
@@ -18,8 +19,8 @@ router = APIRouter()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 @router.post("/auth/login", response_model=LoginResponse)
-@limiter.limit("5/minute")
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthService = Depends(get_auth_service),
@@ -44,7 +45,6 @@ async def login(
     )
 
 @router.post("/auth/register", response_model=UserResponse)
-@limiter.limit("5/minute")
 async def register(
     user_data: UserCreate,
     auth_service: AuthService = Depends(get_auth_service)
@@ -63,6 +63,7 @@ async def register(
 
 
 @router.post("/auth/logout")
+@limiter.exempt
 async def logout():
     """
     Logout endpoint.
@@ -73,6 +74,7 @@ async def logout():
 
 
 @router.get("/auth/check", response_model=UserResponse)
+@limiter.exempt
 async def check_permissions(current_user: User = Depends(get_current_user)):
     """
     Check the current user's permissions.
@@ -94,7 +96,6 @@ async def check_permissions(current_user: User = Depends(get_current_user)):
 
 
 @router.get("/users/getall", response_model=List[UserResponse])
-@limiter.limit("5/minute")
 async def get_all_users(auth_service: AuthService = Depends(get_auth_service)):
     """ Get all users.
     This endpoint retrieves all users from the database.
@@ -106,7 +107,6 @@ async def get_all_users(auth_service: AuthService = Depends(get_auth_service)):
 
 
 @router.post("/users", response_model=UserResponse)
-@limiter.limit("5/minute")
 async def admin_create_user(
     user_data: UserCreate,
     current_user: User = Depends(get_current_user),
@@ -129,7 +129,6 @@ async def admin_create_user(
     return UserResponse.from_orm(user)
 
 @router.delete("/users/{user_id}", response_model=UserResponse)
-@limiter.limit("5/minute")
 async def admin_delete_user(
     user_id: int,
     current_user: User = Depends(get_current_user),
@@ -153,7 +152,6 @@ async def admin_delete_user(
     return UserResponse.from_orm(user)
 
 @router.put("/users/{user_id}", response_model=UserResponse)
-@limiter.limit("5/minute")
 async def admin_update_user(
     user_id: int,
     user_data: UserUpdate, # 2. Usa el nuevo schema UserUpdate

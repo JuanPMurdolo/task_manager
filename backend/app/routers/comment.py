@@ -8,14 +8,11 @@ from app.dependencies.comment import get_comment_service
 from app.core.auth import get_current_user
 from app.services.task import TaskService
 from app.dependencies.task import get_task_service
-from slowapi.decorator import limiter
 
 router = APIRouter()
 
 
 @router.post("/tasks/{task_id}/comments", response_model=TaskCommentResponse)
-@limiter.limit("5/minute")
-
 async def add_task_comment(
     task_id: int,
     comment_data: TaskComment,
@@ -37,7 +34,7 @@ async def add_task_comment(
     return await service.add_comment_to_task(task_id, comment_data, current_user.id)
 
 @router.get("/tasks/{task_id}/comments", response_model=List[TaskCommentResponse])
-@limiter.limit("5/minute")
+
 async def get_task_comments(
     task_id: int,
     service: CommentService = Depends(get_comment_service),
@@ -58,7 +55,7 @@ async def get_task_comments(
     return comments
 
 @router.delete("/tasks/{task_id}/comments/{comment_id}", response_model=TaskCommentResponse)
-@limiter.limit("5/minute")
+
 async def delete_task_comment(
     task_id: int,
     comment_id: int,
